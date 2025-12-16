@@ -66,6 +66,20 @@ export const deleteBadgeImage = async (id, url) => {
     }
 };
 
+export const saveBadgeAvailability = async (id, start, end) => {
+    try {
+        const res = await fetch(`/api/badges/${id}/availability`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ start, end })
+        });
+        return await res.json();
+    } catch (error) {
+        console.error("Failed to save availability", error);
+        throw error;
+    }
+};
+
 export const saveBadgeRelevance = async (id, isRelevant) => {
     try {
         const res = await fetch(`/api/badges/${id}/relevance`, {
@@ -76,6 +90,20 @@ export const saveBadgeRelevance = async (id, isRelevant) => {
         return await res.json();
     } catch (error) {
         console.error("Failed to save relevance", error);
+        throw error;
+    }
+};
+
+export const saveBadgeCost = async (id, cost, amount) => {
+    try {
+        const res = await fetch(`/api/badges/${id}/cost`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cost, amount })
+        });
+        return await res.json();
+    } catch (error) {
+        console.error("Failed to save cost", error);
         throw error;
     }
 };

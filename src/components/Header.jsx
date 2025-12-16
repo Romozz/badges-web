@@ -18,19 +18,21 @@ const Header = () => {
                     {user ? (
                         <div className="user-menu">
                             <span className="user-name">{user.name}</span>
-                            <button onClick={logout} className="icon-btn" title="Log Out">
+                            <button onClick={logout} className="icon-btn" title="Выйти">
                                 <LogOut size={20} />
                             </button>
                         </div>
                     ) : (
                         <div className="auth-buttons">
                             <button onClick={login} className="login-btn compact">
-                                <LogIn size={16} style={{ marginRight: '6px' }} /> Login
+                                <LogIn size={16} style={{ marginRight: '6px' }} /> Войти
                             </button>
-                            {/* Dev Mock Login */}
+                            {/* 
+                            Dev Mock Login
                             <button onClick={loginMock} className="login-btn compact mock-btn">
                                 Dev
                             </button>
+                            */}
                         </div>
                     )}
                 </div>

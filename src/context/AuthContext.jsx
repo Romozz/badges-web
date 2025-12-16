@@ -21,11 +21,14 @@ export const AuthProvider = ({ children }) => {
 
     const login = () => {
         // Redirect to backend auth initiation
-        window.location.href = 'https://badges.news/auth/twitch';
+        // Use relative path if proxied, or construct absolute URL based on window.location
+        const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://badges.news';
+        window.location.href = `${baseUrl}/auth/twitch`;
     };
 
     const loginMock = () => {
-        window.location.href = 'https://badges.news/auth/mock';
+        const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://badges.news';
+        window.location.href = `${baseUrl}/auth/mock`;
     };
 
     const logout = () => {

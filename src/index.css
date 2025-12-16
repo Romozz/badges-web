@@ -168,6 +168,90 @@ body {
     color: var(--color-text-primary);
 }
 
+/* Search Container */
+.search-container {
+    position: relative;
+    max-width: 1000px;
+    margin: 0 auto 3rem auto;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 1.25rem;
+    color: var(--color-text-secondary);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.search-input {
+    width: 100%;
+    padding: 1rem 3.5rem 1rem 3.5rem;
+    background: rgba(30, 30, 35, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.search-input::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 0.6;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    background: rgba(30, 30, 35, 0.8);
+    box-shadow: 0 4px 20px rgba(145, 70, 255, 0.2), 0 0 0 3px rgba(145, 70, 255, 0.1);
+}
+
+.search-clear {
+    position: absolute;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--color-text-secondary);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    line-height: 1;
+    transition: all 0.2s;
+    z-index: 2;
+}
+
+.search-clear:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-text-primary);
+    transform: scale(1.1);
+}
+
+.no-results {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+    background: rgba(30, 30, 35, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    max-width: 1000px;
+    margin: 2rem auto;
+}
+
+.no-results p {
+    margin: 0;
+}
+
 /* Badge Grid - Single Column List */
 .badge-grid {
     display: flex;
@@ -550,7 +634,7 @@ body {
     }
 
     .badge-section {
-        margin-bottom: 2.5rem;
+        margin-bottom: 1rem;
     }
 
     /* Header */
@@ -707,18 +791,106 @@ body {
 
 /* Section Styling */
 .badge-section {
-    margin-bottom: 4rem;
+    margin-bottom: 0.5rem;
 }
 
+/* Chat Preview */
+.chat-preview-card {
+    background: rgba(30, 30, 35, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.chat-preview-header {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.chat-message-line {
+    background: #18181b;
+    /* Twitch Chat BG color roughly */
+    padding: 0.5rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    font-family: 'Inter', sans-serif;
+    /* Ensure clean font */
+    font-size: 13px;
+    line-height: 20px;
+    color: #efeff1;
+}
+
+.chat-badge {
+    height: 18px;
+    width: 18px;
+    margin-right: 4px;
+    border-radius: 2px;
+    vertical-align: middle;
+}
+
+.chat-username {
+    font-weight: 700;
+    color: #ff4d4d;
+    /* Example Red color */
+    margin-right: 4px;
+}
+
+.chat-username:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.chat-colon {
+    color: #efeff1;
+    margin-right: 4px;
+}
+
+.chat-message-line.light-mode {
+    background: #ffffff;
+    color: #1f1f23;
+    border: 1px solid #e5e5e5;
+}
+
+.chat-message-line.light-mode .chat-colon,
+.chat-message-line.light-mode .chat-text {
+    color: #1f1f23;
+}
+
+
 .section-title {
-    font-size: 2rem;
+    font-size: 2.25rem;
     font-weight: 900;
-    margin: 0 0 1.5rem 0;
+    margin: 0 0 2rem 0;
     letter-spacing: -0.04em;
-    background: linear-gradient(135deg, #fff 0%, #adadb8 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #9146ff 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-transform: uppercase;
     text-align: left;
     display: block;
+    position: relative;
+    padding-bottom: 1rem;
+    animation: titleFadeIn 0.6s ease-out;
+    text-align: center;
+}
+
+@keyframes titleFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

@@ -20,7 +20,7 @@ function App() {
                                 <BadgeGrid />
                             </>
                         } />
-                        <Route path="/twitch/badges/:badgeId" element={<BadgeDetailPage />} />
+                        <Route path="/:badgeId" element={<BadgeDetailPage />} />
                     </Routes>
                 </Layout>
             </BrowserRouter>

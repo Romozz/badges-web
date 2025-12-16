@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { fetchGlobalBadges, getBadgeDescription, saveBadgeDescription, saveBadgeImage, deleteBadgeImage, saveBadgeRelevance } from '../services/twitch';
+import { fetchGlobalBadges, getBadgeDescription, saveBadgeDescription, saveBadgeImage, deleteBadgeImage, saveBadgeAvailability, saveBadgeCost } from '../services/twitch';
+import ReactMarkdown from 'react-markdown';
 
 const BadgeDetailPage = () => {
     const { badgeId } = useParams();
@@ -11,24 +12,28 @@ const BadgeDetailPage = () => {
     const [description, setDescription] = useState('');
     const [images, setImages] = useState([]);
     const [isRelevant, setIsRelevant] = useState(false);
+    const [availability, setAvailability] = useState({ start: null, end: null });
+    const [cost, setCost] = useState(null); // 'free', 'paid', or null
+    const [costAmount, setCostAmount] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState('');
     const [newImageUrl, setNewImageUrl] = useState('');
+    const [isChatLightMode, setIsChatLightMode] = useState(false);
 
     useEffect(() => {
-        // We need to fetch all badges to find the specific one since the API is a flat list (cached by backend)
         fetchGlobalBadges().then(data => {
             const found = data.find(b => b.badge === badgeId);
             if (found) {
                 setBadge(found);
-
-                // Fetch details from our backend
                 fetch(`/api/badges/${badgeId}`)
                     .then(res => res.json())
                     .then(data => {
-                        setDescription(data.description || "Описание отсутствует");
+                        setDescription(data.description || '');
                         setImages(data.images || []);
                         setIsRelevant(!!data.isRelevant);
+                        setAvailability(data.availability || { start: null, end: null });
+                        setCost(data.cost || null);
+                        setCostAmount(data.costAmount || '');
                     })
                     .catch(err => console.error(err));
             }
@@ -50,15 +55,51 @@ const BadgeDetailPage = () => {
         }
     };
 
-    const handleRelevanceToggle = async () => {
+
+    const handleAvailabilityChange = async (newAvailability) => {
         try {
-            const newState = !isRelevant;
-            await saveBadgeRelevance(badgeId, newState);
-            setIsRelevant(newState);
+            await saveBadgeAvailability(badgeId, newAvailability.start, newAvailability.end);
+            setAvailability(newAvailability);
+
+            // Re-calculate isRelevant locally for immediate feedback
+            const now = Date.now();
+            const start = newAvailability.start ? new Date(newAvailability.start).getTime() : null;
+            const end = newAvailability.end ? new Date(newAvailability.end).getTime() : Infinity;
+
+            let relevant = false;
+            // Only relevant if start time exists and we are in the range
+            if (start) {
+                if (now >= start && now <= end) {
+                    relevant = true;
+                }
+            }
+            setIsRelevant(relevant);
+
         } catch (e) {
-            alert("Failed to update relevance.");
+            alert("Failed to update availability.");
+        }
+    }
+
+
+    const handleCostChange = async (newCost) => {
+        try {
+            const val = cost === newCost ? null : newCost;
+            await saveBadgeCost(badgeId, val, val === 'paid' ? costAmount : undefined);
+            setCost(val);
+        } catch (e) {
+            alert("Failed to update cost.");
         }
     };
+
+    const handleAmountChange = async (e) => {
+        setCostAmount(e.target.value);
+    };
+
+    const saveAmount = async () => {
+        try {
+            await saveBadgeCost(badgeId, 'paid', costAmount);
+        } catch (e) { console.error(e); }
+    }
 
     const handleAddImage = async () => {
         if (!newImageUrl) return;
@@ -79,6 +120,25 @@ const BadgeDetailPage = () => {
         } catch (e) {
             alert("Failed to delete image");
         }
+    };
+
+    const insertText = (before, after) => {
+        const textarea = document.getElementById('desc-editor');
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        const selected = text.substring(start, end);
+
+        const newText = text.substring(0, start) + before + selected + after + text.substring(end);
+        setEditValue(newText);
+
+        // Restore focus
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + before.length, end + before.length);
+        }, 0);
     };
 
     if (!badge) return <div className="loading">Загрузка информации о значке...</div>;
@@ -152,26 +212,171 @@ const BadgeDetailPage = () => {
                             ))}
                         </div>
                     )}
+
+                    {/* Chat Preview */}
+                    <div className="chat-preview-card">
+                        <div className="chat-preview-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>Вид в чате</span>
+                            <button
+                                onClick={() => setIsChatLightMode(!isChatLightMode)}
+                                style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: 'var(--color-text-secondary)',
+                                    cursor: 'pointer',
+                                    fontSize: '1.2rem',
+                                    padding: '0 5px'
+                                }}
+                                title={isChatLightMode ? "Switch to Dark Mode" : "Switch to Light Mode"}
+                            >
+                                {isChatLightMode ? '🌙' : '☀️'}
+                            </button>
+                        </div>
+                        <div className={`chat-message-line ${isChatLightMode ? 'light-mode' : ''}`}>
+                            <img src={badge.url} alt="Badge" className="chat-badge" />
+                            <span className="chat-username" style={{ color: user?.color || '#E91916' }}>{user?.display_name || 'Username'}</span>
+                            <span className="chat-colon">:</span>
+                            <span className="chat-text">Этот значок выглядит отлично!</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="detail-info">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
                         <h2 style={{ marginBottom: 0 }}>{badge.name}</h2>
+
                         {user && user.name === 'rom0zzz' && (
-                            <button
-                                onClick={handleRelevanceToggle}
-                                style={{
-                                    padding: '0.5rem 1rem',
-                                    borderRadius: '8px',
-                                    border: '1px solid ' + (isRelevant ? 'var(--color-accent)' : 'rgba(255,255,255,0.2)'),
-                                    background: isRelevant ? 'rgba(145, 70, 255, 0.2)' : 'transparent',
-                                    color: isRelevant ? 'var(--color-accent)' : 'var(--color-text-secondary)',
-                                    cursor: 'pointer',
-                                    fontWeight: '600'
-                                }}
-                            >
-                                {isRelevant ? '★ Актуальный' : '☆ Пометить актуальным'}
-                            </button>
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <div style={{ fontWeight: 'bold', color: isRelevant ? 'var(--color-accent)' : '#aaa' }}>
+                                    {isRelevant ? '★ Актуальный' : '☆ Неактуальный'}
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '8px', alignItems: 'flex-end' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <label style={{ fontSize: '0.6rem', color: '#aaa' }}>Начало (YYYY-MM-DD HH:MM)</label>
+                                        <input
+                                            type="text"
+                                            id="start-time-input"
+                                            placeholder="YYYY-MM-DD HH:MM"
+                                            style={{ background: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px', padding: '2px', fontSize: '0.8rem', minWidth: '140px' }}
+                                            defaultValue={availability.start ? (() => {
+                                                const d = new Date(availability.start);
+                                                // Format to Local YYYY-MM-DD HH:MM
+                                                const pad = n => n < 10 ? '0' + n : n;
+                                                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                                            })() : ''}
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <label style={{ fontSize: '0.6rem', color: '#aaa' }}>Конец (YYYY-MM-DD HH:MM)</label>
+                                        <input
+                                            type="text"
+                                            id="end-time-input"
+                                            placeholder="YYYY-MM-DD HH:MM"
+                                            style={{ background: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px', padding: '2px', fontSize: '0.8rem', minWidth: '140px' }}
+                                            defaultValue={availability.end ? (() => {
+                                                const d = new Date(availability.end);
+                                                const pad = n => n < 10 ? '0' + n : n;
+                                                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                                            })() : ''}
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            const startVal = document.getElementById('start-time-input').value;
+                                            const endVal = document.getElementById('end-time-input').value;
+
+                                            const parseLocal = (s) => {
+                                                if (!s) return null;
+                                                // Create date as if local
+                                                // replacing space with T helps Date.parse in some browsers, but "YYYY-MM-DD HH:MM" usually works or we manually parse.
+                                                // Safest: new Date(s) often works, but let's be standardized.
+                                                // If s is "2025-12-16 22:00", new Date(s) is local.
+                                                const d = new Date(s);
+                                                if (isNaN(d.getTime())) return null;
+                                                return d.toISOString();
+                                            };
+
+                                            const startISO = parseLocal(startVal);
+                                            const endISO = parseLocal(endVal);
+
+                                            if (startVal && !startISO) return alert("Invalid Start Date");
+                                            if (endVal && !endISO) return alert("Invalid End Date");
+
+                                            handleAvailabilityChange({ start: startISO, end: endISO });
+                                            alert("Saved!");
+                                        }}
+                                        style={{
+                                            background: 'var(--color-accent)',
+                                            border: 'none',
+                                            color: 'white',
+                                            borderRadius: '4px',
+                                            padding: '4px 8px',
+                                            cursor: 'pointer',
+                                            fontSize: '0.8rem',
+                                            height: 'fit-content',
+                                            marginBottom: '2px'
+                                        }}
+                                    >
+                                        Save
+                                    </button>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <button
+                                        onClick={() => handleCostChange('free')}
+                                        style={{
+                                            padding: '0.5rem 1rem',
+                                            borderRadius: '8px',
+                                            border: '1px solid ' + (cost === 'free' ? '#2ecc71' : 'rgba(255,255,255,0.2)'),
+                                            background: cost === 'free' ? 'rgba(46, 204, 113, 0.2)' : 'transparent',
+                                            color: cost === 'free' ? '#2ecc71' : 'var(--color-text-secondary)',
+                                            cursor: 'pointer',
+                                            fontWeight: '600'
+                                        }}
+                                    >
+                                        {cost === 'free' ? 'Бесплатный' : 'Сделать бесплатным'}
+                                    </button>
+
+                                    <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                                        <button
+                                            onClick={() => handleCostChange('paid')}
+                                            style={{
+                                                padding: '0.5rem 1rem',
+                                                borderRadius: '8px',
+                                                border: '1px solid ' + (cost === 'paid' ? '#e74c3c' : 'rgba(255,255,255,0.2)'),
+                                                background: cost === 'paid' ? 'rgba(231, 76, 60, 0.2)' : 'transparent',
+                                                color: cost === 'paid' ? '#e74c3c' : 'var(--color-text-secondary)',
+                                                cursor: 'pointer',
+                                                fontWeight: '600'
+                                            }}
+                                        >
+                                            {cost === 'paid' ? 'Платный' : 'Сделать платным'}
+                                        </button>
+
+                                        {cost === 'paid' && (
+                                            <input
+                                                type="number"
+                                                placeholder="#"
+                                                value={costAmount || ''}
+                                                onChange={(e) => setCostAmount(e.target.value)}
+                                                onBlur={saveAmount}
+                                                style={{
+                                                    width: '50px',
+                                                    padding: '0.5rem',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid rgba(231, 76, 60, 0.5)',
+                                                    background: 'rgba(0,0,0,0.3)',
+                                                    color: '#fff',
+                                                    fontWeight: '600',
+                                                    textAlign: 'center'
+                                                }}
+                                                title="Number of subs (optional)"
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         )}
                     </div>
 
@@ -179,37 +384,93 @@ const BadgeDetailPage = () => {
                         <label>Как получить?</label>
                         {isEditing ? (
                             <div className="edit-container">
+                                {/* Toolbar */}
+                                <div style={{
+                                    display: 'flex',
+                                    gap: '0.5rem',
+                                    marginBottom: '0.5rem',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    padding: '0.5rem',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255,255,255,0.1)'
+                                }}>
+                                    <button type="button" onClick={() => insertText('**', '**')} style={toolbarBtnStyle}><b>B</b></button>
+                                    <button type="button" onClick={() => insertText('*', '*')} style={toolbarBtnStyle}><i>I</i></button>
+                                    <button type="button" onClick={() => insertText('[', '](url)')} style={toolbarBtnStyle}>🔗</button>
+                                    <button type="button" onClick={() => insertText('\n- ', '')} style={toolbarBtnStyle}>List</button>
+                                </div>
+
                                 <textarea
+                                    id="desc-editor"
                                     value={editValue}
                                     onChange={(e) => setEditValue(e.target.value)}
-                                    rows={5}
+                                    rows={10}
+                                    style={{
+                                        width: '100%',
+                                        background: 'rgba(0,0,0,0.3)',
+                                        color: '#efeff1',
+                                        border: '1px solid rgba(145, 70, 255, 0.3)',
+                                        borderRadius: '8px',
+                                        padding: '1rem',
+                                        fontFamily: 'inherit',
+                                        resize: 'vertical',
+                                        marginBottom: '1rem',
+                                        outline: 'none',
+                                        boxSizing: 'border-box'
+                                    }}
                                 />
                                 <div className="edit-actions">
                                     <button onClick={handleSave} className="save-btn">Save</button>
-                                    <button onClick={() => setIsEditing(false)} className="cancel-btn">Cancel</button>
+                                    <button onClick={() => setIsEditing(false)} className="cancel-btn" style={{ marginLeft: '1rem', background: 'transparent', border: '1px solid #555', color: '#ccc', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
                                 </div>
                             </div>
                         ) : (
                             <div className="description-display">
-                                <p>{description}</p>
-                                {/* Only show edit button if logged in as admin (rom0zzz) */}
+                                <div className="markdown-content" style={{ lineHeight: '1.6', color: '#dedede' }}>
+                                    {description ? (
+                                        <ReactMarkdown
+                                            components={{
+                                                a: ({ node, ...props }) => <a style={{ color: 'var(--color-accent)', textDecoration: 'underline' }} target="_blank" rel="noopener noreferrer" {...props} />,
+                                                p: ({ node, ...props }) => <p style={{ margin: '0.5em 0' }} {...props} />,
+                                                ul: ({ node, ...props }) => <ul style={{ paddingLeft: '1.5em' }} {...props} />,
+                                                li: ({ node, ...props }) => <li style={{ marginBottom: '0.25em' }} {...props} />
+                                            }}
+                                        >
+                                            {description}
+                                        </ReactMarkdown>
+                                    ) : (
+                                        <span style={{ color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>Описание отсутствует</span>
+                                    )}
+                                </div>
                                 {user && user.name === 'rom0zzz' && (
-                                    <button onClick={handleEdit} className="edit-btn">Edit Description</button>
+                                    <button onClick={handleEdit} className="edit-btn" style={{ marginTop: '1rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>Edit Description</button>
                                 )}
                             </div>
                         )}
                     </div>
-                    {/* 
-                    <div className="info-row">
-                        <span className="label">Badge ID:</span>
-                        <span className="value">{badge.badge}</span>
-                    </div>
 
-                    <div className="info-row">
-                        <span className="label">Click Action:</span>
-                        <span className="value">{badge.clickAction || "None"}</span>
-                    </div>
-*/}
+                    {/* Availability Display for All Users */}
+                    {(availability.start || availability.end) && (
+                        <div className="info-row">
+                            {availability.start && (
+                                <div>
+                                    <span className="label">Начало: </span>
+                                    <span className="value" style={{ color: '#efeff1' }}>
+                                        {new Date(availability.start).toLocaleString()}
+                                    </span>
+                                </div>
+                            )}
+                            {availability.end && (
+                                <div>
+                                    <span className="label">Конец: </span>
+                                    <span className="value" style={{ color: '#efeff1' }}>
+                                        {new Date(availability.end).toLocaleString()}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <div className="info-row">
                         <span className="label">Пользователей:</span>
                         <span className="value">{badge.user_count.toLocaleString()} ({badge.percentage.toFixed(4)}%)</span>
@@ -219,6 +480,16 @@ const BadgeDetailPage = () => {
             </div>
         </div>
     );
+};
+
+const toolbarBtnStyle = {
+    background: 'transparent',
+    border: '1px solid rgba(255,255,255,0.2)',
+    color: '#efeff1',
+    borderRadius: '4px',
+    padding: '0.25rem 0.5rem',
+    cursor: 'pointer',
+    minWidth: '30px'
 };
 
 export default BadgeDetailPage;
