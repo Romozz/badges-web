@@ -226,6 +226,7 @@ app.get('/api/badges', async (req, res) => {
     const costAmounts = db.cost_amounts || {};
     const addedDates = db.added_dates || {};
     const availability = db.availability || {};
+    const typesMap = db.types || {}; // NEW: types array storage
 
     badges = badges.map(b => {
         // Calculate Relevance based on Availability
@@ -234,6 +235,15 @@ app.get('/api/badges', async (req, res) => {
         const cost = costs[b.badge] || costs[b.base_id];
         const costAmount = costAmounts[b.badge] || costAmounts[b.base_id];
         const addedAt = addedDates[b.badge] || addedDates[b.base_id];
+
+        // NEW: Get types array, migrate from cost if needed
+        let types = typesMap[b.badge] || typesMap[b.base_id];
+        if (!types && cost) {
+            types = [cost]; // Backward compatibility: convert cost to types array
+        }
+        if (!types) {
+            types = [];
+        }
 
         let isRelevant = false;
 
@@ -249,7 +259,7 @@ app.get('/api/badges', async (req, res) => {
         return {
             ...b,
             isRelevant,
-            cost: cost || null,
+            types: types, // NEW: types array
             costAmount: costAmount || null,
             added_at: addedAt || null,
             availability: avail || null
@@ -589,7 +599,7 @@ app.get('/api/users/:username', async (req, res) => {
         // If user not found in DB, try to fetch from Twitch
         if (!userEntry) {
             console.log(`User ${username} not found in DB, fetching from Twitch...`);
-console.log(process.env.CLIENT_ID)
+            console.log(process.env.CLIENT_ID)
             try {
                 // Fetch user ID from Twitch Helix API
                 const userResponse = await axios.get('https://api.twitch.tv/helix/users', {
@@ -605,32 +615,32 @@ console.log(process.env.CLIENT_ID)
                 const login = twitchUser.login;
                 // Fetch badges using GQL ViewerCard query
                 const payload = [
-            {
-                "operationName": "ViewerCard",
-                "variables": {
-                    "channelID": userId,
-                    "channelLogin": login,
-                    "hasChannelID": true,
-                    "giftRecipientLogin": login,
-                    "isViewerBadgeCollectionEnabled": true,
-                    "withStandardGifting": true,
-                    "badgeSourceChannelID": '12826',
-                    "badgeSourceChannelLogin": 'twitch'
-                },
-                "extensions": {
-                    "persistedQuery": {
-                        "version": 1,
-                        "sha256Hash": "d3b821f55301d3b4248b0d4312043e2e940d9ada08216f75221da7b68bcbfa0f"
+                    {
+                        "operationName": "ViewerCard",
+                        "variables": {
+                            "channelID": userId,
+                            "channelLogin": login,
+                            "hasChannelID": true,
+                            "giftRecipientLogin": login,
+                            "isViewerBadgeCollectionEnabled": true,
+                            "withStandardGifting": true,
+                            "badgeSourceChannelID": '12826',
+                            "badgeSourceChannelLogin": 'twitch'
+                        },
+                        "extensions": {
+                            "persistedQuery": {
+                                "version": 1,
+                                "sha256Hash": "d3b821f55301d3b4248b0d4312043e2e940d9ada08216f75221da7b68bcbfa0f"
+                            }
+                        }
                     }
-                }
-            }
-        ];
+                ];
                 const gqlResponse = await axios.post('https://gql.twitch.tv/gql', payload, {
-            headers: {
-                'Client-ID': GQL_CLIENT_ID,
-                'Content-Type': 'application/json'
-            }
-        });
+                    headers: {
+                        'Client-ID': GQL_CLIENT_ID,
+                        'Content-Type': 'application/json'
+                    }
+                });
                 const data = gqlResponse.data[0].data;
                 if (!data || !data.channelViewer || !data.channelViewer.earnedBadges) {
                     return res.status(404).json({ error: 'No badges found for user' });
@@ -756,6 +766,38 @@ app.post('/api/badges/:id/cost', (req, res) => {
         cost: db.costs[req.params.id] || null,
         costAmount: db.cost_amounts[req.params.id] || null
     });
+});
+
+// NEW: Update Badge Types (multi-select: free, paid, local, canceled, technical)
+app.post('/api/badges/:id/types', (req, res) => {
+    if (!req.session.user || !req.session.user.roles.includes('admin')) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const { types, amount } = req.body;
+    const db = getDb();
+
+    // Update Types Array
+    if (types && Array.isArray(types)) {
+        db.types = db.types || {};
+        db.types[req.params.id] = types;
+    } else {
+        if (db.types) {
+            delete db.types[req.params.id];
+        }
+    }
+
+    // Update Cost Amount
+    if (amount !== undefined) {
+        db.cost_amounts = db.cost_amounts || {};
+        if (amount && amount > 1) {
+            db.cost_amounts[req.params.id] = parseInt(amount);
+        } else {
+            delete db.cost_amounts[req.params.id];
+        }
+    }
+
+    saveDb(db);
+    res.json({ success: true, types, amount });
 });
 
 // Admin Management APIs

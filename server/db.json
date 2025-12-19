@@ -152,5 +152,21 @@
   },
   "admins": [
     "mejkiz"
-  ]
+  ],
+  "types": {
+    "tft-paris-open": [
+      "technical",
+      "canceled",
+      "local",
+      "paid",
+      "free"
+    ],
+    "purple-noob": [
+      "free",
+      "paid",
+      "local",
+      "canceled",
+      "technical"
+    ]
+  }
 }

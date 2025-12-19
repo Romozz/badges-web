@@ -110,3 +110,17 @@ export const saveBadgeCost = async (id, cost, amount) => {
         throw error;
     }
 };
+
+export const saveBadgeTypes = async (id, types, amount) => {
+    try {
+        const res = await fetch(`${API_URL}/api/badges/${id}/types`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ types, amount })
+        });
+        return await res.json();
+    } catch (error) {
+        console.error("Failed to save types", error);
+        throw error;
+    }
+};

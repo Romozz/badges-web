@@ -48,13 +48,18 @@ const BadgeGrid = () => {
             filtered = filtered.filter(badge => !isBadgeOwned(badge));
         }
 
-        // Cost filter
+
+        // Cost filter (now checks types array)
         if (costFilter === 'free') {
-            filtered = filtered.filter(badge => badge.cost === 'free');
+            filtered = filtered.filter(badge => badge.types && badge.types.includes('free'));
         } else if (costFilter === 'paid') {
-            filtered = filtered.filter(badge => badge.cost === 'paid');
+            filtered = filtered.filter(badge => badge.types && badge.types.includes('paid'));
         } else if (costFilter === 'local') {
-            filtered = filtered.filter(badge => badge.cost === 'local');
+            filtered = filtered.filter(badge => badge.types && badge.types.includes('local'));
+        } else if (costFilter === 'canceled') {
+            filtered = filtered.filter(badge => badge.types && badge.types.includes('canceled'));
+        } else if (costFilter === 'technical') {
+            filtered = filtered.filter(badge => badge.types && badge.types.includes('technical'));
         }
 
         return filtered;
@@ -251,6 +256,38 @@ const BadgeGrid = () => {
                             }}
                         >
                             Локальные
+                        </button>
+                        <button
+                            onClick={() => setCostFilter('canceled')}
+                            style={{
+                                background: costFilter === 'canceled' ? 'rgba(149, 165, 166, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                border: costFilter === 'canceled' ? '1px solid rgba(149, 165, 166, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '20px',
+                                padding: '0.4rem 0.9rem',
+                                color: costFilter === 'canceled' ? '#95a5a6' : 'rgba(255, 255, 255, 0.6)',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                fontWeight: costFilter === 'canceled' ? '600' : '400',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            Отменённые
+                        </button>
+                        <button
+                            onClick={() => setCostFilter('technical')}
+                            style={{
+                                background: costFilter === 'technical' ? 'rgba(155, 89, 182, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                border: costFilter === 'technical' ? '1px solid rgba(155, 89, 182, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '20px',
+                                padding: '0.4rem 0.9rem',
+                                color: costFilter === 'technical' ? '#9b59b6' : 'rgba(255, 255, 255, 0.6)',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                fontWeight: costFilter === 'technical' ? '600' : '400',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            Технические
                         </button>
                     </div>
 

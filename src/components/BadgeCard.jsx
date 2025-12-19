@@ -83,10 +83,18 @@ const BadgeCard = ({ badge, status }) => {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <h3 className="badge-title">{name}</h3>
-                        {cost && (
-                            <span className={`cost-badge ${cost === 'free' ? 'free' : cost === 'paid' ? 'paid' : 'local'}`}>
-                                {cost === 'free' ? 'Бесплатно' : cost === 'paid' ? 'Платно' : 'Локальный'}
-                            </span>
+                        {badge.types && badge.types.length > 0 && (
+                            <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                                {badge.types.map(type => (
+                                    <span key={type} className={`cost-badge ${type}`}>
+                                        {type === 'free' ? 'Бесплатно' :
+                                            type === 'paid' ? `Платно${badge.costAmount ? ` (${badge.costAmount})` : ''}` :
+                                                type === 'local' ? 'Локальный' :
+                                                    type === 'canceled' ? 'Отменён' :
+                                                        type === 'technical' ? 'Технический' : type}
+                                    </span>
+                                ))}
+                            </div>
                         )}
                     </div>
                 </div>

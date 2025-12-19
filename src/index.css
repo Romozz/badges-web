@@ -479,6 +479,18 @@ body {
     border: 1px solid rgba(52, 152, 219, 0.2);
 }
 
+.cost-badge.canceled {
+    background-color: rgba(149, 165, 166, 0.15);
+    color: #95a5a6;
+    border: 1px solid rgba(149, 165, 166, 0.2);
+}
+
+.cost-badge.technical {
+    background-color: rgba(155, 89, 182, 0.15);
+    color: #9b59b6;
+    border: 1px solid rgba(155, 89, 182, 0.2);
+}
+
 /* Badge Detail Page */
 .badge-detail-page {
     animation: fadeIn 0.4s ease-out;

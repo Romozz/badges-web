@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { fetchGlobalBadges, getBadgeDescription, saveBadgeDescription, saveBadgeImage, deleteBadgeImage, saveBadgeAvailability, saveBadgeCost } from '../services/twitch';
+import { fetchGlobalBadges, getBadgeDescription, saveBadgeDescription, saveBadgeImage, deleteBadgeImage, saveBadgeAvailability, saveBadgeCost, saveBadgeTypes } from '../services/twitch';
 import ReactMarkdown from 'react-markdown';
 import { Helmet } from 'react-helmet-async';
 
@@ -9,12 +9,12 @@ const BadgeDetailPage = () => {
     const { badgeId } = useParams();
     const { user } = useAuth();
     const [badge, setBadge] = useState(null);
-    const highResUrl = badge?.url?.replace(/\/(\d)$/, '/3');
+    const highResUrl = badge?.url?.slice(0, -1) + '3';
     const [description, setDescription] = useState('');
     const [images, setImages] = useState([]);
     const [isRelevant, setIsRelevant] = useState(false);
     const [availability, setAvailability] = useState({ start: null, end: null });
-    const [cost, setCost] = useState(null); // 'free', 'paid', or null
+    const [types, setTypes] = useState([]); // NEW: array of types
     const [costAmount, setCostAmount] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState('');
@@ -33,7 +33,7 @@ const BadgeDetailPage = () => {
                         setImages(data.images || []);
                         setIsRelevant(!!data.isRelevant);
                         setAvailability(data.availability || { start: null, end: null });
-                        setCost(data.cost || null);
+                        setTypes(data.types || []); // NEW: load types array
                         setCostAmount(data.costAmount || '');
                     })
                     .catch(err => console.error(err));
@@ -92,13 +92,19 @@ const BadgeDetailPage = () => {
     }
 
 
-    const handleCostChange = async (newCost) => {
+    const handleTypeToggle = async (type) => {
         try {
-            const val = cost === newCost ? null : newCost;
-            await saveBadgeCost(badgeId, val, val === 'paid' ? costAmount : undefined);
-            setCost(val);
+            let newTypes;
+            if (types.includes(type)) {
+                newTypes = types.filter(t => t !== type);
+            } else {
+                newTypes = [...types, type];
+            }
+
+            await saveBadgeTypes(badgeId, newTypes, newTypes.includes('paid') ? costAmount : undefined);
+            setTypes(newTypes);
         } catch (e) {
-            alert("Failed to update cost.");
+            alert("Failed to update types.");
         }
     };
 
@@ -108,7 +114,7 @@ const BadgeDetailPage = () => {
 
     const saveAmount = async () => {
         try {
-            await saveBadgeCost(badgeId, 'paid', costAmount);
+            await saveBadgeTypes(badgeId, types, costAmount);
         } catch (e) { console.error(e); }
     }
 
@@ -343,39 +349,27 @@ const BadgeDetailPage = () => {
                                     </button>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                    <button
-                                        onClick={() => handleCostChange('free')}
-                                        style={{
-                                            padding: '0.5rem 1rem',
-                                            borderRadius: '8px',
-                                            border: '1px solid ' + (cost === 'free' ? '#2ecc71' : 'rgba(255,255,255,0.2)'),
-                                            background: cost === 'free' ? 'rgba(46, 204, 113, 0.2)' : 'transparent',
-                                            color: cost === 'free' ? '#2ecc71' : 'var(--color-text-secondary)',
-                                            cursor: 'pointer',
-                                            fontWeight: '600'
-                                        }}
-                                    >
-                                        {cost === 'free' ? 'Бесплатный' : 'Сделать бесплатным'}
-                                    </button>
 
-                                    <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-                                        <button
-                                            onClick={() => handleCostChange('paid')}
-                                            style={{
-                                                padding: '0.5rem 1rem',
-                                                borderRadius: '8px',
-                                                border: '1px solid ' + (cost === 'paid' ? '#e74c3c' : 'rgba(255,255,255,0.2)'),
-                                                background: cost === 'paid' ? 'rgba(231, 76, 60, 0.2)' : 'transparent',
-                                                color: cost === 'paid' ? '#e74c3c' : 'var(--color-text-secondary)',
-                                                cursor: 'pointer',
-                                                fontWeight: '600'
-                                            }}
-                                        >
-                                            {cost === 'paid' ? 'Платный' : 'Сделать платным'}
-                                        </button>
+                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', background: types.includes('free') ? 'rgba(46, 204, 113, 0.1)' : 'transparent', border: '1px solid ' + (types.includes('free') ? '#2ecc71' : 'rgba(255,255,255,0.2)') }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={types.includes('free')}
+                                            onChange={() => handleTypeToggle('free')}
+                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                        />
+                                        <span style={{ color: types.includes('free') ? '#2ecc71' : 'var(--color-text-secondary)', fontWeight: '600' }}>Бесплатный</span>
+                                    </label>
 
-                                        {cost === 'paid' && (
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', background: types.includes('paid') ? 'rgba(231, 76, 60, 0.1)' : 'transparent', border: '1px solid ' + (types.includes('paid') ? '#e74c3c' : 'rgba(255,255,255,0.2)') }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={types.includes('paid')}
+                                            onChange={() => handleTypeToggle('paid')}
+                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                        />
+                                        <span style={{ color: types.includes('paid') ? '#e74c3c' : 'var(--color-text-secondary)', fontWeight: '600' }}>Платный</span>
+                                        {types.includes('paid') && (
                                             <input
                                                 type="number"
                                                 placeholder="#"
@@ -384,33 +378,48 @@ const BadgeDetailPage = () => {
                                                 onBlur={saveAmount}
                                                 style={{
                                                     width: '50px',
-                                                    padding: '0.5rem',
-                                                    borderRadius: '8px',
+                                                    padding: '0.3rem',
+                                                    borderRadius: '4px',
                                                     border: '1px solid rgba(231, 76, 60, 0.5)',
                                                     background: 'rgba(0,0,0,0.3)',
                                                     color: '#fff',
                                                     fontWeight: '600',
                                                     textAlign: 'center'
                                                 }}
-                                                title="Number of subs (optional)"
+                                                title="Number of subs"
                                             />
                                         )}
-                                    </div>
+                                    </label>
 
-                                    <button
-                                        onClick={() => handleCostChange('local')}
-                                        style={{
-                                            padding: '0.5rem 1rem',
-                                            borderRadius: '8px',
-                                            border: '1px solid ' + (cost === 'local' ? '#3498db' : 'rgba(255,255,255,0.2)'),
-                                            background: cost === 'local' ? 'rgba(52, 152, 219, 0.2)' : 'transparent',
-                                            color: cost === 'local' ? '#3498db' : 'var(--color-text-secondary)',
-                                            cursor: 'pointer',
-                                            fontWeight: '600'
-                                        }}
-                                    >
-                                        {cost === 'local' ? 'Локальный' : 'Сделать локальным'}
-                                    </button>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', background: types.includes('local') ? 'rgba(52, 152, 219, 0.1)' : 'transparent', border: '1px solid ' + (types.includes('local') ? '#3498db' : 'rgba(255,255,255,0.2)') }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={types.includes('local')}
+                                            onChange={() => handleTypeToggle('local')}
+                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                        />
+                                        <span style={{ color: types.includes('local') ? '#3498db' : 'var(--color-text-secondary)', fontWeight: '600' }}>Локальный</span>
+                                    </label>
+
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', background: types.includes('canceled') ? 'rgba(149, 165, 166, 0.1)' : 'transparent', border: '1px solid ' + (types.includes('canceled') ? '#95a5a6' : 'rgba(255,255,255,0.2)') }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={types.includes('canceled')}
+                                            onChange={() => handleTypeToggle('canceled')}
+                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                        />
+                                        <span style={{ color: types.includes('canceled') ? '#95a5a6' : 'var(--color-text-secondary)', fontWeight: '600' }}>Отменённый</span>
+                                    </label>
+
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', background: types.includes('technical') ? 'rgba(155, 89, 182, 0.1)' : 'transparent', border: '1px solid ' + (types.includes('technical') ? '#9b59b6' : 'rgba(255,255,255,0.2)') }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={types.includes('technical')}
+                                            onChange={() => handleTypeToggle('technical')}
+                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                        />
+                                        <span style={{ color: types.includes('technical') ? '#9b59b6' : 'var(--color-text-secondary)', fontWeight: '600' }}>Технический</span>
+                                    </label>
                                 </div>
                             </div>
                         )}
