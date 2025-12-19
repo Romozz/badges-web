@@ -11,32 +11,29 @@ const AdminPage = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
 
-    // Initial check and redirect if not allowed
-    useEffect(() => {
-        if (!user) {
-            // navigate('/'); // Wait for auth to load? user might be null initially
-            return;
-        }
-        if (!user.roles || !user.roles.includes('admin')) {
-            navigate('/');
-        }
-    }, [user, navigate]);
+    const [recalculating, setRecalculating] = useState(false);
 
-    // Fetch Admins
-    useEffect(() => {
-        if (user && user.roles && user.roles.includes('admin')) {
-            fetchAdmins();
-        }
-    }, [user]);
-
-    const fetchAdmins = async () => {
+    const handleRecalculateStats = async () => {
+        if (!confirm("Вы уверены, что хотите пересчитать статистику для всех пользователей? Это может занять некоторое время.")) return;
+        setRecalculating(true);
+        setError(null);
+        setSuccess(null);
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/list`);
-            if (!res.ok) throw new Error("Failed to fetch");
+            // Note: credentials include is important if the API expects cookies
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/recalculate-stats`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // credentials: 'include' // If you are using cookie based auth, usually fetch defaults to not include. 
+                // However, previous admin calls didn't explicitly set it, relying on global config or same-origin. 
+                // Assuming same-origin or configured elsewhere. If issues arise, check credentials.
+            });
             const data = await res.json();
-            setAdmins(data);
+            if (data.error) throw new Error(data.error);
+            setSuccess(`Статистика успешно обновлена для ${data.count} пользователей.`);
         } catch (e) {
-            console.error(e);
+            setError(e.message || "Ошибка при обновлении статистики");
+        } finally {
+            setRecalculating(false);
         }
     };
 
@@ -96,7 +93,38 @@ const AdminPage = () => {
 
             <h1 style={{ borderBottom: '1px solid #333', paddingBottom: '1rem' }}>Панель Администратора</h1>
 
+            {error && <div style={{ background: 'rgba(231, 76, 60, 0.2)', color: '#e74c3c', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>{error}</div>}
+            {success && <div style={{ background: 'rgba(46, 204, 113, 0.2)', color: '#2ecc71', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>{success}</div>}
+
             <div className="admin-section" style={{ marginTop: '2rem' }}>
+                <h2>Обслуживание системы</h2>
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                    <p style={{ marginBottom: '1rem', color: '#aaa' }}>
+                        Пересчитать статистику значков (Total, Free, Paid) для всех пользователей на основе актуальных данных из базы значков.
+                        Полезно, если метаданные значков изменились или статистика рассинхронизирована.
+                    </p>
+                    <button
+                        onClick={handleRecalculateStats}
+                        disabled={recalculating}
+                        style={{
+                            background: recalculating ? '#555' : 'var(--color-accent)',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '0.75rem 1.5rem',
+                            borderRadius: '8px',
+                            cursor: recalculating ? 'not-allowed' : 'pointer',
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                        }}
+                    >
+                        {recalculating ? 'Выполняется...' : 'Пересчитать статистику для всех пользователей'}
+                    </button>
+                </div>
+            </div>
+
+            <div className="admin-section" style={{ marginTop: '3rem' }}>
                 <h2>Управление Администраторами</h2>
                 <p style={{ color: '#aaa', marginBottom: '1rem' }}>
                     {isCreator

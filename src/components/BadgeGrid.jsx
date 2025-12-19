@@ -1,14 +1,136 @@
 import React, { useEffect, useState } from 'react';
 import BadgeCard from './BadgeCard';
 import { fetchGlobalBadges } from '../services/twitch';
-import { Search, Filter, ArrowUpDown, X } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, X, ChevronDown, ChevronUp, Check, RotateCcw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+
+const FilterDropdown = ({ label, value, options, onSelect, isOpen, onToggle, icon: Icon = Filter }) => {
+    return (
+        <div style={{ position: 'relative' }}>
+            <button
+                onClick={onToggle}
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    background: isOpen ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.03)',
+                    border: isOpen ? '1px solid rgba(145, 70, 255, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '0.6rem 1rem',
+                    borderRadius: '12px',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    minWidth: '220px',
+                    justifyContent: 'space-between',
+                    transition: 'all 0.2s ease',
+                    boxShadow: isOpen ? '0 0 0 2px rgba(145, 70, 255, 0.15)' : 'none',
+                    backdropFilter: 'blur(10px)'
+                }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        background: isOpen ? 'rgba(145, 70, 255, 0.8)' : 'rgba(255, 255, 255, 0.05)',
+                        color: isOpen ? '#fff' : 'rgba(255, 255, 255, 0.7)',
+                        transition: 'all 0.2s ease'
+                    }}>
+                        <Icon size={16} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.3 }}>
+                        <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'rgba(255, 255, 255, 0.4)', fontWeight: 600 }}>{label}</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'rgba(255, 255, 255, 0.9)' }}>{value}</span>
+                    </div>
+                </div>
+                {isOpen ? <ChevronUp size={16} color="rgba(255, 255, 255, 0.5)" /> : <ChevronDown size={16} color="rgba(255, 255, 255, 0.3)" />}
+            </button>
+
+            {isOpen && (
+                <>
+                    <div
+                        style={{ position: 'fixed', inset: 0, zIndex: 999 }}
+                        onClick={onToggle}
+                    />
+                    <div style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 6px)',
+                        left: 0,
+                        width: '100%',
+                        minWidth: '220px',
+                        background: '#161618',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        borderRadius: '12px',
+                        padding: '0.4rem',
+                        zIndex: 1000,
+                        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.2)',
+                        overflow: 'hidden',
+                        animation: 'fadeIn 0.2s ease-out'
+                    }}>
+                        <style>
+                            {`
+                                @keyframes fadeIn {
+                                    from { opacity: 0; transform: translateY(-8px); }
+                                    to { opacity: 1; transform: translateY(0); }
+                                }
+                            `}
+                        </style>
+                        {options.map((option) => (
+                            <button
+                                key={option.value}
+                                onClick={() => {
+                                    onSelect(option.value);
+                                    onToggle();
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    width: '100%',
+                                    padding: '0.6rem 0.8rem',
+                                    borderRadius: '8px',
+                                    background: option.label === value ? 'rgba(145, 70, 255, 0.1)' : 'transparent',
+                                    border: 'none',
+                                    color: option.label === value ? 'var(--color-accent)' : 'rgba(255, 255, 255, 0.8)',
+                                    cursor: 'pointer',
+                                    fontSize: '0.9rem',
+                                    textAlign: 'left',
+                                    transition: 'all 0.15s ease',
+                                    marginBottom: '2px'
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (option.label !== value) {
+                                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                                        e.currentTarget.style.color = '#fff';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (option.label !== value) {
+                                        e.currentTarget.style.background = 'transparent';
+                                        e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+                                    }
+                                }}
+                            >
+                                {option.label}
+                                {option.label === value && <Check size={16} strokeWidth={3} />}
+                            </button>
+                        ))}
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
 
 const BadgeGrid = () => {
     const { userBadges } = useAuth();
     const [badges, setBadges] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [openDropdown, setOpenDropdown] = useState(null); // 'ownership', 'cost', 'sort'
 
     // Filter states
     const [ownershipFilter, setOwnershipFilter] = useState('all'); // 'all', 'owned', 'not-owned'
@@ -16,6 +138,28 @@ const BadgeGrid = () => {
 
     // Sort state
     const [sortBy, setSortBy] = useState('default'); // 'default', 'name', 'users-desc', 'users-asc'
+
+    const ownershipLabels = {
+        'all': 'Все',
+        'owned': 'Полученные',
+        'not-owned': 'Не полученные'
+    };
+
+    const costLabels = {
+        'all': 'Все типы',
+        'free': 'Бесплатные',
+        'paid': 'Платные',
+        'local': 'Локальные',
+        'canceled': 'Отменённые',
+        'technical': 'Технические'
+    };
+
+    const sortLabels = {
+        'default': 'По умолчанию',
+        'name': 'По названию',
+        'users-desc': 'Сначала популярные',
+        'users-asc': 'Сначала редкие'
+    };
 
     useEffect(() => {
         fetchGlobalBadges().then(data => {
@@ -101,7 +245,9 @@ const BadgeGrid = () => {
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 borderRadius: '16px',
                 padding: '1.5rem',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                position: 'relative',
+                zIndex: 50
             }}>
                 {/* Search Input */}
                 <div className="search-container" style={{
@@ -131,297 +277,127 @@ const BadgeGrid = () => {
 
                 {/* Filter and Sort Controls */}
                 <div className="filter-sort-controls" style={{
-                    display: 'flex',
-                    gap: '0.75rem',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '1rem',
+                    alignItems: 'center'
                 }}>
-                    {/* Ownership Filter Pills */}
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <button
-                            onClick={() => setOwnershipFilter('all')}
-                            style={{
-                                background: ownershipFilter === 'all' ? 'rgba(145, 70, 255, 0.3)' : 'rgba(255, 255, 255, 0.05)',
-                                border: ownershipFilter === 'all' ? '1px solid rgba(145, 70, 255, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                padding: '0.4rem 0.9rem',
-                                color: ownershipFilter === 'all' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: ownershipFilter === 'all' ? '600' : '400',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            Все
-                        </button>
-                        <button
-                            onClick={() => setOwnershipFilter('owned')}
-                            style={{
-                                background: ownershipFilter === 'owned' ? 'rgba(145, 70, 255, 0.3)' : 'rgba(255, 255, 255, 0.05)',
-                                border: ownershipFilter === 'owned' ? '1px solid rgba(145, 70, 255, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                padding: '0.4rem 0.9rem',
-                                color: ownershipFilter === 'owned' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: ownershipFilter === 'owned' ? '600' : '400',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            Полученные
-                        </button>
-                        <button
-                            onClick={() => setOwnershipFilter('not-owned')}
-                            style={{
-                                background: ownershipFilter === 'not-owned' ? 'rgba(145, 70, 255, 0.3)' : 'rgba(255, 255, 255, 0.05)',
-                                border: ownershipFilter === 'not-owned' ? '1px solid rgba(145, 70, 255, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                padding: '0.4rem 0.9rem',
-                                color: ownershipFilter === 'not-owned' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: ownershipFilter === 'not-owned' ? '600' : '400',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            Не полученные
-                        </button>
-                    </div>
+                    <FilterDropdown
+                        label="Статус"
+                        value={ownershipLabels[ownershipFilter]}
+                        options={[
+                            { value: 'all', label: 'Все' },
+                            { value: 'owned', label: 'Полученные' },
+                            { value: 'not-owned', label: 'Не полученные' }
+                        ]}
+                        onSelect={setOwnershipFilter}
+                        isOpen={openDropdown === 'ownership'}
+                        onToggle={() => setOpenDropdown(openDropdown === 'ownership' ? null : 'ownership')}
+                    />
 
-                    <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
+                    <FilterDropdown
+                        label="Тип"
+                        value={costLabels[costFilter]}
+                        options={[
+                            { value: 'all', label: 'Все типы' },
+                            { value: 'free', label: 'Бесплатные' },
+                            { value: 'paid', label: 'Платные' },
+                            { value: 'local', label: 'Локальные' },
+                            { value: 'canceled', label: 'Отменённые' },
+                            { value: 'technical', label: 'Технические' }
+                        ]}
+                        onSelect={setCostFilter}
+                        isOpen={openDropdown === 'cost'}
+                        onToggle={() => setOpenDropdown(openDropdown === 'cost' ? null : 'cost')}
+                    />
 
-                    {/* Cost Filter Pills */}
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <button
-                            onClick={() => setCostFilter('all')}
-                            style={{
-                                background: costFilter === 'all' ? 'rgba(145, 70, 255, 0.3)' : 'rgba(255, 255, 255, 0.05)',
-                                border: costFilter === 'all' ? '1px solid rgba(145, 70, 255, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                padding: '0.4rem 0.9rem',
-                                color: costFilter === 'all' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: costFilter === 'all' ? '600' : '400',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            Все типы
-                        </button>
-                        <button
-                            onClick={() => setCostFilter('free')}
-                            style={{
-                                background: costFilter === 'free' ? 'rgba(46, 204, 113, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                                border: costFilter === 'free' ? '1px solid rgba(46, 204, 113, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                padding: '0.4rem 0.9rem',
-                                color: costFilter === 'free' ? '#2ecc71' : 'rgba(255, 255, 255, 0.6)',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: costFilter === 'free' ? '600' : '400',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            Бесплатные
-                        </button>
-                        <button
-                            onClick={() => setCostFilter('paid')}
-                            style={{
-                                background: costFilter === 'paid' ? 'rgba(231, 76, 60, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                                border: costFilter === 'paid' ? '1px solid rgba(231, 76, 60, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                padding: '0.4rem 0.9rem',
-                                color: costFilter === 'paid' ? '#e74c3c' : 'rgba(255, 255, 255, 0.6)',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: costFilter === 'paid' ? '600' : '400',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            Платные
-                        </button>
-                        <button
-                            onClick={() => setCostFilter('local')}
-                            style={{
-                                background: costFilter === 'local' ? 'rgba(52, 152, 219, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                                border: costFilter === 'local' ? '1px solid rgba(52, 152, 219, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                padding: '0.4rem 0.9rem',
-                                color: costFilter === 'local' ? '#3498db' : 'rgba(255, 255, 255, 0.6)',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: costFilter === 'local' ? '600' : '400',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            Локальные
-                        </button>
-                        <button
-                            onClick={() => setCostFilter('canceled')}
-                            style={{
-                                background: costFilter === 'canceled' ? 'rgba(149, 165, 166, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                                border: costFilter === 'canceled' ? '1px solid rgba(149, 165, 166, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                padding: '0.4rem 0.9rem',
-                                color: costFilter === 'canceled' ? '#95a5a6' : 'rgba(255, 255, 255, 0.6)',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: costFilter === 'canceled' ? '600' : '400',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            Отменённые
-                        </button>
-                        <button
-                            onClick={() => setCostFilter('technical')}
-                            style={{
-                                background: costFilter === 'technical' ? 'rgba(155, 89, 182, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                                border: costFilter === 'technical' ? '1px solid rgba(155, 89, 182, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                padding: '0.4rem 0.9rem',
-                                color: costFilter === 'technical' ? '#9b59b6' : 'rgba(255, 255, 255, 0.6)',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: costFilter === 'technical' ? '600' : '400',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            Технические
-                        </button>
-                    </div>
+                    <FilterDropdown
+                        label="Сортировка"
+                        value={sortLabels[sortBy]}
+                        options={[
+                            { value: 'default', label: 'По умолчанию' },
+                            { value: 'name', label: 'По названию (A-Z)' },
+                            { value: 'users-desc', label: 'По популярности (Сначала популярные)' },
+                            { value: 'users-asc', label: 'По популярности (Сначала редкие)' }
+                        ]}
+                        onSelect={setSortBy}
+                        isOpen={openDropdown === 'sort'}
+                        onToggle={() => setOpenDropdown(openDropdown === 'sort' ? null : 'sort')}
+                        icon={ArrowUpDown}
+                    />
+                </div>
 
-                    <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
 
-                    {/* Sort Pills */}
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <button
-                            onClick={() => setSortBy('default')}
-                            style={{
-                                background: sortBy === 'default' ? 'rgba(145, 70, 255, 0.3)' : 'rgba(255, 255, 255, 0.05)',
-                                border: sortBy === 'default' ? '1px solid rgba(145, 70, 255, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                padding: '0.4rem 0.9rem',
-                                color: sortBy === 'default' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: sortBy === 'default' ? '600' : '400',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            По умолчанию
-                        </button>
-                        <button
-                            onClick={() => setSortBy('name')}
-                            style={{
-                                background: sortBy === 'name' ? 'rgba(145, 70, 255, 0.3)' : 'rgba(255, 255, 255, 0.05)',
-                                border: sortBy === 'name' ? '1px solid rgba(145, 70, 255, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                padding: '0.4rem 0.9rem',
-                                color: sortBy === 'name' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: sortBy === 'name' ? '600' : '400',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            По названию
-                        </button>
-                        <button
-                            onClick={() => setSortBy('users-desc')}
-                            style={{
-                                background: sortBy === 'users-desc' ? 'rgba(145, 70, 255, 0.3)' : 'rgba(255, 255, 255, 0.05)',
-                                border: sortBy === 'users-desc' ? '1px solid rgba(145, 70, 255, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                padding: '0.4rem 0.9rem',
-                                color: sortBy === 'users-desc' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: sortBy === 'users-desc' ? '600' : '400',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            Популярные ↓
-                        </button>
-                        <button
-                            onClick={() => setSortBy('users-asc')}
-                            style={{
-                                background: sortBy === 'users-asc' ? 'rgba(145, 70, 255, 0.3)' : 'rgba(255, 255, 255, 0.05)',
-                                border: sortBy === 'users-asc' ? '1px solid rgba(145, 70, 255, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
-                                padding: '0.4rem 0.9rem',
-                                color: sortBy === 'users-asc' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: sortBy === 'users-asc' ? '600' : '400',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            Редкие ↑
-                        </button>
-                    </div>
-
-                    {/* Reset Button - Only show when filters are active */}
-                    {(ownershipFilter !== 'all' || costFilter !== 'all' || sortBy !== 'default') && (
+                {/* Reset Button - Only show when filters are active */}
+                {
+                    (ownershipFilter !== 'all' || costFilter !== 'all' || sortBy !== 'default') && (
                         <>
-                            <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
-                            <button
-                                onClick={() => {
-                                    setOwnershipFilter('all');
-                                    setCostFilter('all');
-                                    setSortBy('default');
-                                }}
-                                title="Сбросить фильтры"
-                                style={{
-                                    background: 'rgba(145, 70, 255, 0.2)',
-                                    border: '1px solid rgba(145, 70, 255, 0.4)',
-                                    borderRadius: '50%',
-                                    width: '32px',
-                                    height: '32px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease',
-                                    padding: 0
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = 'rgba(145, 70, 255, 0.3)';
-                                    e.currentTarget.style.transform = 'scale(1.1)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'rgba(145, 70, 255, 0.2)';
-                                    e.currentTarget.style.transform = 'scale(1)';
-                                }}
-                            >
-                                <X size={16} color="#9146ff" />
-                            </button>
+                            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem', width: '100%' }}>
+                                <button
+                                    onClick={() => {
+                                        setOwnershipFilter('all');
+                                        setCostFilter('all');
+                                        setSortBy('default');
+                                    }}
+                                    title="Сбросить фильтры"
+                                    style={{
+                                        background: 'rgba(145, 70, 255, 0.1)',
+                                        border: '1px solid rgba(145, 70, 255, 0.3)',
+                                        borderRadius: '50%',
+                                        width: '40px',
+                                        height: '40px',
+                                        padding: '0',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#9146ff',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = 'rgba(145, 70, 255, 0.2)';
+                                        e.currentTarget.style.transform = 'rotate(-90deg)';
+                                        e.currentTarget.style.color = '#fff';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = 'rgba(145, 70, 255, 0.1)';
+                                        e.currentTarget.style.transform = 'rotate(0deg)';
+                                        e.currentTarget.style.color = '#9146ff';
+                                    }}
+                                >
+                                    <RotateCcw size={20} />
+                                </button>
+                            </div>
                         </>
-                    )}
-                </div>
-            </div>
+                    )
+                }
+            </div >
 
-            {relevantBadges.length > 0 && (
-                <div className="badge-section">
-                    <h2 className="section-title">Доступны к получению</h2>
-                    <div className="badge-grid">
-                        {relevantBadges.map((badge) => (
-                            <BadgeCard key={`relevant-${badge.badge}`} badge={badge} status="available" />
-                        ))}
+            {
+                relevantBadges.length > 0 && (
+                    <div className="badge-section">
+                        <h2 className="section-title">Доступны к получению</h2>
+                        <div className="badge-grid">
+                            {relevantBadges.map((badge) => (
+                                <BadgeCard key={`relevant-${badge.badge}`} badge={badge} status="available" />
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {upcomingBadges.length > 0 && (
-                <div className="badge-section">
-                    <h2 className="section-title">Скоро станут доступны</h2>
-                    <div className="badge-grid">
-                        {upcomingBadges.map((badge) => (
-                            <BadgeCard key={`upcoming-${badge.badge}`} badge={badge} status="upcoming" />
-                        ))}
+            {
+                upcomingBadges.length > 0 && (
+                    <div className="badge-section">
+                        <h2 className="section-title">Скоро станут доступны</h2>
+                        <div className="badge-grid">
+                            {upcomingBadges.map((badge) => (
+                                <BadgeCard key={`upcoming-${badge.badge}`} badge={badge} status="upcoming" />
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <div className="badge-section">
                 <h2 className="section-title">Все значки</h2>
@@ -433,12 +409,14 @@ const BadgeGrid = () => {
             </div>
 
             {/* No results message */}
-            {searchQuery && allBadges.length === 0 && (
-                <div className="no-results">
-                    <p>Значки не найдены по запросу "{searchQuery}"</p>
-                </div>
-            )}
-        </div>
+            {
+                searchQuery && allBadges.length === 0 && (
+                    <div className="no-results">
+                        <p>Значки не найдены по запросу "{searchQuery}"</p>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 

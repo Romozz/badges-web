@@ -477,8 +477,16 @@ app.post('/api/me/badges/save', async (req, res) => {
         badges.forEach(badgeName => {
             const badge = badgeMap.get(badgeName);
             if (badge) {
-                if (badge.cost === 'free') freeCount++;
-                else if (badge.cost === 'paid') paidCount++;
+                // Check new types array (multi-select)
+                if (badge.types && Array.isArray(badge.types)) {
+                    if (badge.types.includes('free')) freeCount++;
+                    if (badge.types.includes('paid')) paidCount++;
+                }
+                // Fallback to old cost field (backward compatibility)
+                else if (badge.cost) {
+                    if (badge.cost === 'free') freeCount++;
+                    else if (badge.cost === 'paid') paidCount++;
+                }
             }
         });
 
@@ -544,8 +552,8 @@ app.get('/api/stats/leaderboard', async (req, res) => {
             return a.login.localeCompare(b.login);
         });
 
-        // Return top 10
-        res.json(leaderboard.slice(0, 10));
+        // Return full leaderboard (frontend handles pagination)
+        res.json(leaderboard);
     } catch (error) {
         console.error("Error fetching leaderboard:", error.message);
         res.status(500).json({ error: 'Failed to fetch leaderboard' });
@@ -845,6 +853,230 @@ app.post('/api/admin/remove', (req, res) => {
         saveDb(db);
     }
     res.json({ success: true, admins: db.admins || [] });
+});
+
+app.post('/api/admin/recalculate-stats', (req, res) => {
+    if (!req.session.user || !req.session.user.roles.includes('admin')) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Use global badgesCache which contains the merged data (Twitch Title -> DB types/cost)
+    // badgesCache is populated by /api/badges
+    const badges = badgesCache || [];
+
+    if (badges.length === 0) {
+        return res.status(503).json({ error: 'Badges cache is empty. Please visit the homepage first to load badges.' });
+    }
+
+    // Create quick lookup map for badges by Name (Title) because user_badges uses Titles
+    const badgeMap = new Map(badges.map(b => [b.name, b]));
+
+    // LOAD USER BADGES HERE
+    const userBadges = getUserBadgesData();
+    let updatedCount = 0;
+
+    // Iterate over all users in userBadges
+    Object.keys(userBadges).forEach(userId => {
+        const user = userBadges[userId];
+        if (!user.badges || !Array.isArray(user.badges)) return;
+
+        let freeCount = 0;
+        let paidCount = 0;
+
+        user.badges.forEach(badgeName => {
+            const badge = badgeMap.get(badgeName);
+            if (badge) {
+                // Check new types array (multi-select)
+                if (badge.types && Array.isArray(badge.types)) {
+                    if (badge.types.includes('free')) freeCount++;
+                    if (badge.types.includes('paid')) paidCount++;
+                }
+                // Fallback to old cost field (backward compatibility)
+                else if (badge.cost) {
+                    if (badge.cost === 'free') freeCount++;
+                    else if (badge.cost === 'paid') paidCount++;
+                }
+            }
+        });
+
+        // Update stats
+        user.stats = {
+            total: user.badges.length,
+            free: freeCount,
+            paid: paidCount
+        };
+        updatedCount++;
+    });
+
+    saveUserBadgesData(userBadges);
+    console.log(`[Admin] Recalculated stats for ${updatedCount} users`);
+    res.json({ success: true, count: updatedCount });
+});
+
+// ============================================
+// SSR Metadata for Social Media Crawlers
+// ============================================
+
+// Detect if request is from a social media crawler
+function isCrawler(userAgent) {
+    if (!userAgent) return false;
+    const crawlers = [
+        'TelegramBot',
+        'facebookexternalhit',
+        'Twitterbot',
+        'Discordbot',
+        'Slackbot',
+        'WhatsApp',
+        'LinkedInBot',
+        'Googlebot'
+    ];
+    return crawlers.some(crawler => userAgent.includes(crawler));
+}
+
+// Generate HTML with meta tags
+function generateHTMLWithMeta(metaTags) {
+    return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    ${metaTags}
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>`;
+}
+
+// SSR for badge pages
+app.get('/badge/:id', async (req, res, next) => {
+    const userAgent = req.headers['user-agent'] || '';
+
+    if (!isCrawler(userAgent)) {
+        return next(); // Let SPA handle it
+    }
+
+    try {
+        const badgeId = req.params.id;
+        const badges = badgesCache || [];
+        const badge = badges.find(b => b.id === badgeId);
+
+        if (!badge) {
+            return next();
+        }
+
+        const title = `${badge.name} - Badges Tracker`;
+        const description = badge.description || `Глобальный значок Twitch: ${badge.name}`;
+        const image = badge.image || 'https://badges.news/default-badge.png';
+        const url = `https://badges.news/badge/${badgeId}`;
+
+        const metaTags = `
+    <title>${title}</title>
+    <meta name="description" content="${description.replace(/"/g, '&quot;')}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="${url}">
+    <meta property="og:title" content="${title}">
+    <meta property="og:description" content="${description.replace(/"/g, '&quot;')}">
+    <meta property="og:image" content="${image}">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="${url}">
+    <meta property="twitter:title" content="${title}">
+    <meta property="twitter:description" content="${description.replace(/"/g, '&quot;')}">
+    <meta property="twitter:image" content="${image}">
+        `;
+
+        res.send(generateHTMLWithMeta(metaTags));
+    } catch (error) {
+        console.error('Error generating badge meta:', error);
+        next();
+    }
+});
+
+// SSR for stats page
+app.get('/stats', (req, res, next) => {
+    const userAgent = req.headers['user-agent'] || '';
+
+    if (!isCrawler(userAgent)) {
+        return next(); // Let SPA handle it
+    }
+
+    const title = 'Статистика - Badges Tracker';
+    const description = 'Лидеры по коллекциям значков Twitch. Топ пользователей по общему количеству, бесплатным, платным и редким значкам.';
+    const url = 'https://badges.news/stats';
+    const image = 'https://badges.news/stats-preview.png';
+
+    const metaTags = `
+    <title>${title}</title>
+    <meta name="description" content="${description}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="${url}">
+    <meta property="og:title" content="${title}">
+    <meta property="og:description" content="${description}">
+    <meta property="og:image" content="${image}">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="${url}">
+    <meta property="twitter:title" content="${title}">
+    <meta property="twitter:description" content="${description}">
+    <meta property="twitter:image" content="${image}">
+    `;
+
+    res.send(generateHTMLWithMeta(metaTags));
+});
+
+// SSR for user profile pages
+app.get('/user/:username', async (req, res, next) => {
+    const userAgent = req.headers['user-agent'] || '';
+
+    if (!isCrawler(userAgent)) {
+        return next(); // Let SPA handle it
+    }
+
+    try {
+        const username = req.params.username.toLowerCase();
+        const userData = getUserBadgesData();
+        const userEntry = Object.values(userData).find(u => u.login.toLowerCase() === username);
+
+        if (!userEntry) {
+            return next();
+        }
+
+        const title = `${userEntry.login} - Коллекция значков | Badges Tracker`;
+        const description = `Коллекция значков Twitch пользователя ${userEntry.login}. Всего значков: ${userEntry.stats.total}, бесплатных: ${userEntry.stats.free}, платных: ${userEntry.stats.paid}`;
+        const url = `https://badges.news/user/${username}`;
+        const image = `https://static-cdn.jtvnw.net/jtv_user_pictures/${username}-profile_image-300x300.png`;
+
+        const metaTags = `
+    <title>${title}</title>
+    <meta name="description" content="${description}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="profile">
+    <meta property="og:url" content="${url}">
+    <meta property="og:title" content="${title}">
+    <meta property="og:description" content="${description}">
+    <meta property="og:image" content="${image}">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:url" content="${url}">
+    <meta property="twitter:title" content="${title}">
+    <meta property="twitter:description" content="${description}">
+    <meta property="twitter:image" content="${image}">
+        `;
+
+        res.send(generateHTMLWithMeta(metaTags));
+    } catch (error) {
+        console.error('Error generating user profile meta:', error);
+        next();
+    }
 });
 
 app.listen(port, () => {

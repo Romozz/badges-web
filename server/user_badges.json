@@ -39,8 +39,8 @@
     "lastUpdated": "2025-12-19T16:52:57.247Z",
     "stats": {
       "total": 33,
-      "free": 0,
-      "paid": 0
+      "free": 2,
+      "paid": 2
     }
   },
   "32155044": {
@@ -55,6 +55,155 @@
     "stats": {
       "total": 4,
       "free": 1,
+      "paid": 0
+    }
+  },
+  "36029255": {
+    "login": "riotgames",
+    "badges": [
+      "TwitchCon 2023 - Las Vegas",
+      "TwitchCon 2019 - San Diego",
+      "Gold Pixel Heart - Together For Good '24",
+      "Verified",
+      "Purple Pixel Heart - Together For Good '24",
+      "Ruby Pixel Heart - Together For Good '24",
+      "SUBtember 2025",
+      "Turbo",
+      "Twitch Recap 2023",
+      "Twitch Recap 2024",
+      "Twitch Recap 2025",
+      "TwitchCon 2025",
+      "Ugly Sweater"
+    ],
+    "lastUpdated": "2025-12-19T18:20:18.672Z",
+    "stats": {
+      "total": 13,
+      "free": 1,
+      "paid": 0
+    }
+  },
+  "92473777": {
+    "login": "discord",
+    "badges": [
+      "TwitchCon 2017 - Long Beach",
+      "Verified"
+    ],
+    "lastUpdated": "2025-12-19T18:19:38.997Z",
+    "stats": {
+      "total": 2,
+      "free": 0,
+      "paid": 0
+    }
+  },
+  "99899949": {
+    "login": "bratishkinoff",
+    "badges": [
+      "TwitchCon 2020 - Amsterdam",
+      "Diana",
+      "OWL All-Access Pass 2018",
+      "OWL All-Access Pass 2018",
+      "OWL All-Access Pass 2019",
+      "Verified",
+      "r/place 2023 Cake",
+      "SUBtember 2024",
+      "SUBtember 2025",
+      "Twitch Recap 2023",
+      "Twitch Recap 2024",
+      "Twitch Recap 2025",
+      "TwitchCon 2025"
+    ],
+    "lastUpdated": "2025-12-19T18:19:21.136Z",
+    "stats": {
+      "total": 13,
+      "free": 1,
+      "paid": 0
+    }
+  },
+  "116738112": {
+    "login": "pwgood",
+    "badges": [
+      "GlitchCon 2020",
+      "Alone",
+      "Arc Raiders Launch 2025",
+      "Arcane Season 2 Premiere",
+      "Battlefield 6",
+      "Borderlands 4 Badge - Ripper",
+      "Borderlands 4 Badge - Vault Symbol",
+      "CS:GO Week Brazil 2022",
+      "Clip the Halls",
+      "Destiny 2: The Final Shape Raid Race",
+      "DragonScimmy",
+      "Elden Ring Nightreign Clip badge - Wylder",
+      "Evo 2025",
+      "Fright Fest 2025",
+      "GamerDuo",
+      "Gears of War Superfan Badge",
+      "Gingko Leaf",
+      "Gold Pixel Heart",
+      "Gold Pixel Heart - Together For Good '24",
+      "Gone Bananas Badge",
+      "GP Explorer 3",
+      "Hornet",
+      "Jeff the Land Shark",
+      "La Velada V Badge",
+      "League of Legends Mid Season Invitational 2025 Support a Streamer",
+      "League of Legends Mid Season Invitational 2025",
+      "LEGENDUS",
+      "Low",
+      "Marathon Reveal Runner",
+      "Mel",
+      "Minecraft 15th Anniversary Celebration",
+      "Verified",
+      "Chaos Orb",
+      "Pokémon Legends: Z-A Tepig",
+      "Purple Noob",
+      "Purple Pixel Heart - Together For Good '24",
+      "Raging Wolf Helm",
+      "Rainbow Six Siege X 10th Anniversary",
+      "RevedTV StreamAwards 2025",
+      "Ruby Pixel Heart - Together For Good '24",
+      "Rustmas 2025",
+      "Share the Love",
+      "Sonic Racing",
+      "Speedons 5 Badge",
+      "Stream For Humanity 2",
+      "Streamer Awards 2024",
+      "Streamer Awards Tux",
+      "SUBtember 2024",
+      "SUBtember 2025",
+      "TFT Paris Open",
+      "The First Descendant Badge",
+      "The Game Awards 2023",
+      "The Onryō's Mask",
+      "Together for Good '25 - Good Badge",
+      "Together for Good '25 - Gooder Badge",
+      "Together for Good '25 - Goodest Badge",
+      "Total War Anniversary",
+      "Touch Grass",
+      "Twitch Recap 2023",
+      "Twitch Recap 2024",
+      "Twitch Recap 2025",
+      "Ugly Sweater",
+      "VCT Paris 2025",
+      "ZEVENT 2024",
+      "ZEVENT25"
+    ],
+    "lastUpdated": "2025-12-19T18:19:59.857Z",
+    "stats": {
+      "total": 65,
+      "free": 5,
+      "paid": 3
+    }
+  },
+  "132417535": {
+    "login": "first",
+    "badges": [
+      "Verified"
+    ],
+    "lastUpdated": "2025-12-19T18:19:46.848Z",
+    "stats": {
+      "total": 1,
+      "free": 0,
       "paid": 0
     }
   },
@@ -148,8 +297,21 @@
     "lastUpdated": "2025-12-19T16:51:03.556Z",
     "stats": {
       "total": 83,
-      "free": 2,
-      "paid": 2
+      "free": 5,
+      "paid": 4
+    }
+  },
+  "518169065": {
+    "login": "marvel",
+    "badges": [
+      "Verified",
+      "Twitch Recap 2023"
+    ],
+    "lastUpdated": "2025-12-19T18:19:35.968Z",
+    "stats": {
+      "total": 2,
+      "free": 1,
+      "paid": 0
     }
   },
   "681579330": {
@@ -194,10 +356,10 @@
       "Video Games Day",
       "ZEVENT 2024"
     ],
-    "lastUpdated": "2025-12-19T17:46:59.537Z",
+    "lastUpdated": "2025-12-19T23:23:38.002Z",
     "stats": {
       "total": 17,
-      "free": 0,
+      "free": 2,
       "paid": 0
     }
   }
