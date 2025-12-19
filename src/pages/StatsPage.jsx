@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Trophy, TrendingUp, Users, Award, Sparkles } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const StatsPage = () => {
+    const { user } = useAuth();
     const [leaderboards, setLeaderboards] = useState({
         total: [],
         free: [],
@@ -13,6 +15,7 @@ const StatsPage = () => {
     const [overview, setOverview] = useState(null);
     const [activeTab, setActiveTab] = useState('total');
     const [loading, setLoading] = useState(true);
+    const [displayCount, setDisplayCount] = useState(10); // Pagination
 
     useEffect(() => {
         const baseUrl = import.meta.env.VITE_API_URL || '';
@@ -49,6 +52,12 @@ const StatsPage = () => {
 
     const currentTab = tabs.find(t => t.id === activeTab);
     const currentLeaderboard = leaderboards[activeTab];
+
+    // Pagination and user position
+    const displayedUsers = currentLeaderboard.slice(0, displayCount);
+    const userPosition = user ? currentLeaderboard.findIndex(entry => entry.login === user.name) + 1 : 0;
+    const userEntry = userPosition > 0 ? currentLeaderboard[userPosition - 1] : null;
+    const showLoadMore = displayCount < currentLeaderboard.length;
 
     return (
         <>
@@ -151,7 +160,7 @@ const StatsPage = () => {
                     </div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {currentLeaderboard.map((entry, index) => {
+                        {displayedUsers.map((entry, index) => {
                             const Icon = currentTab.icon;
                             const medals = ['🥇', '🥈', '🥉'];
 
@@ -226,6 +235,106 @@ const StatsPage = () => {
                                 </div>
                             );
                         })}
+
+                        {/* Load More Button */}
+                        {showLoadMore && (
+                            <button
+                                onClick={() => setDisplayCount(prev => prev + 10)}
+                                style={{
+                                    padding: '1rem',
+                                    background: 'rgba(145, 70, 255, 0.1)',
+                                    border: '2px solid rgba(145, 70, 255, 0.3)',
+                                    borderRadius: '12px',
+                                    color: 'var(--color-accent)',
+                                    cursor: 'pointer',
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    transition: 'all 0.2s ease',
+                                    marginTop: '0.5rem'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(145, 70, 255, 0.2)';
+                                    e.currentTarget.style.borderColor = 'var(--color-accent)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(145, 70, 255, 0.1)';
+                                    e.currentTarget.style.borderColor = 'rgba(145, 70, 255, 0.3)';
+                                }}
+                            >
+                                Загрузить ещё ({currentLeaderboard.length - displayCount} осталось)
+                            </button>
+                        )}
+
+                        {/* Current User Position (if not in displayed list) */}
+                        {userEntry && userPosition > displayCount && (
+                            <div style={{
+                                marginTop: '2rem',
+                                padding: '1.5rem',
+                                background: 'rgba(145, 70, 255, 0.1)',
+                                border: '2px solid var(--color-accent)',
+                                borderRadius: '12px'
+                            }}>
+                                <div style={{
+                                    fontSize: '0.9rem',
+                                    color: 'rgba(255, 255, 255, 0.6)',
+                                    marginBottom: '0.5rem',
+                                    textAlign: 'center'
+                                }}>
+                                    Ваша позиция
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '1rem'
+                                }}>
+                                    <div style={{
+                                        fontSize: '1.5rem',
+                                        fontWeight: '700',
+                                        minWidth: '50px',
+                                        textAlign: 'center',
+                                        color: 'var(--color-accent)'
+                                    }}>
+                                        #{userPosition}
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{
+                                            fontSize: '1.1rem',
+                                            fontWeight: '600',
+                                            color: '#fff'
+                                        }}>
+                                            {userEntry.login}
+                                        </div>
+                                        <div style={{
+                                            fontSize: '0.85rem',
+                                            color: 'rgba(255, 255, 255, 0.5)'
+                                        }}>
+                                            Всего: {userEntry.total}
+                                        </div>
+                                    </div>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        background: `${currentTab.color}22`,
+                                        padding: '0.5rem 1rem',
+                                        borderRadius: '8px',
+                                        border: `1px solid ${currentTab.color}44`
+                                    }}>
+                                        <currentTab.icon size={20} color={currentTab.color} />
+                                        <span style={{
+                                            fontSize: '1.25rem',
+                                            fontWeight: '700',
+                                            color: currentTab.color
+                                        }}>
+                                            {activeTab === 'total' ? userEntry.total :
+                                                activeTab === 'free' ? userEntry.free :
+                                                    activeTab === 'paid' ? userEntry.paid :
+                                                        userEntry.rare || 0}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
