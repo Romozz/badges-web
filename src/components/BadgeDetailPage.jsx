@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fetchGlobalBadges, getBadgeDescription, saveBadgeDescription, saveBadgeImage, deleteBadgeImage, saveBadgeAvailability, saveBadgeCost } from '../services/twitch';
 import ReactMarkdown from 'react-markdown';
+import { Helmet } from 'react-helmet-async';
 
 const BadgeDetailPage = () => {
     const { badgeId } = useParams();
@@ -25,7 +26,7 @@ const BadgeDetailPage = () => {
             const found = data.find(b => b.badge === badgeId);
             if (found) {
                 setBadge(found);
-                fetch(`/api/badges/${badgeId}`)
+                fetch(`${import.meta.env.VITE_API_URL || ''}/api/badges/${badgeId}`)
                     .then(res => res.json())
                     .then(data => {
                         setDescription(data.description || '');
@@ -39,6 +40,16 @@ const BadgeDetailPage = () => {
             }
         });
     }, [badgeId]);
+
+    // Matomo Tracking
+    useEffect(() => {
+        if (badge) {
+            const _paq = window._paq = window._paq || [];
+            _paq.push(['setCustomUrl', window.location.href]);
+            _paq.push(['setDocumentTitle', `${badge.name} Badge - Twitch Global Badges`]);
+            _paq.push(['trackPageView']);
+        }
+    }, [badge]);
 
     const handleEdit = () => {
         setEditValue(description);
@@ -145,6 +156,16 @@ const BadgeDetailPage = () => {
 
     return (
         <div className="badge-detail-page">
+            <Helmet>
+                <title>{badge.name} - Глобальный значок Twitch - Badges Tracker</title>
+                <meta name="description" content={description ? description.substring(0, 160) : `Подробная информация о глобальном значке ${badge.name} на Twitch, включая количество пользователей и доступность.`} />
+                <meta property="og:title" content={`${badge.name} - Глобальные значки Twitch`} />
+                <meta property="og:description" content={description ? description.substring(0, 200) : `Узнайте подробности о значке ${badge.name}, количество пользователей и доступность.`} />
+                <meta property="og:image" content={highResUrl || badge.url} />
+                <meta name="twitter:title" content={`Значок ${badge.name}`} />
+                <meta name="twitter:description" content={description ? description.substring(0, 200) : `Узнайте подробности о значке ${badge.name}.`} />
+                <meta name="twitter:image" content={highResUrl || badge.url} />
+            </Helmet>
             <div className="detail-layout">
                 <div className="detail-images">
                     <div className="image-card">
@@ -153,7 +174,7 @@ const BadgeDetailPage = () => {
                     </div>
 
                     {/* Admin Image Controls */}
-                    {user && user.name === 'rom0zzz' && (
+                    {user && user.roles && user.roles.includes('admin') && (
                         <div className="admin-image-controls" style={{ marginTop: '1rem' }}>
                             <div style={{ display: 'flex', gap: '5px' }}>
                                 <input
@@ -191,7 +212,7 @@ const BadgeDetailPage = () => {
                             {images.map((imgUrl, idx) => (
                                 <div key={idx} className="image-card" style={{ position: 'relative' }}>
                                     <img src={imgUrl} alt="Attached" style={{ maxWidth: '100%' }} />
-                                    {user && user.name === 'rom0zzz' && (
+                                    {user && user.roles && user.roles.includes('admin') && (
                                         <button
                                             onClick={() => handleDeleteImage(imgUrl)}
                                             style={{
@@ -245,7 +266,7 @@ const BadgeDetailPage = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
                         <h2 style={{ marginBottom: 0 }}>{badge.name}</h2>
 
-                        {user && user.name === 'rom0zzz' && (
+                        {user && user.roles && user.roles.includes('admin') && (
                             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                 <div style={{ fontWeight: 'bold', color: isRelevant ? 'var(--color-accent)' : '#aaa' }}>
                                     {isRelevant ? '★ Актуальный' : '☆ Неактуальный'}
@@ -442,7 +463,7 @@ const BadgeDetailPage = () => {
                                         <span style={{ color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>Описание отсутствует</span>
                                     )}
                                 </div>
-                                {user && user.name === 'rom0zzz' && (
+                                {user && user.roles && user.roles.includes('admin') && (
                                     <button onClick={handleEdit} className="edit-btn" style={{ marginTop: '1rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>Edit Description</button>
                                 )}
                             </div>

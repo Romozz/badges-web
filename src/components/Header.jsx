@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogIn, LogOut, User } from 'lucide-react';
+import { LogIn, LogOut, User, Award, BarChart3 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 
@@ -17,6 +17,18 @@ const Header = () => {
                 <div className="header-actions">
                     {user ? (
                         <div className="user-menu">
+                            {user.roles && user.roles.includes('admin') && (
+                                <Link to="/admin" className="header-nav-btn">
+                                    <User size={16} />
+                                    <span>Admin</span>
+                                </Link>
+                            )}
+                            <Link to="/my-badges" className="header-icon-btn" title="Мои значки">
+                                <Award size={18} />
+                            </Link>
+                            <Link to="/stats" className="header-icon-btn" title="Статистика">
+                                <BarChart3 size={18} />
+                            </Link>
                             <span className="user-name">{user.name}</span>
                             <button onClick={logout} className="icon-btn" title="Выйти">
                                 <LogOut size={20} />
@@ -27,12 +39,11 @@ const Header = () => {
                             <button onClick={login} className="login-btn compact">
                                 <LogIn size={16} style={{ marginRight: '6px' }} /> Войти
                             </button>
-                            {/* 
-                            Dev Mock Login
-                            <button onClick={loginMock} className="login-btn compact mock-btn">
-                                Dev
-                            </button>
-                            */}
+                            {import.meta.env.DEV && (
+                                <button onClick={loginMock} className="login-btn compact mock-btn">
+                                    Dev
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>

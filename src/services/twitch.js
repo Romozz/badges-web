@@ -1,7 +1,9 @@
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 export const fetchGlobalBadges = async () => {
     try {
         // Use our backend which caches the result
-        const response = await fetch('/api/badges');
+        const response = await fetch(`${API_URL}/api/badges`);
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
@@ -15,7 +17,7 @@ export const fetchGlobalBadges = async () => {
 
 export const getBadgeDescription = async (id) => {
     try {
-        const res = await fetch(`/api/badges/${id}/description`);
+        const res = await fetch(`${API_URL}/api/badges/${id}/description`);
         const data = await res.json();
         return data.description;
     } catch (error) {
@@ -26,7 +28,7 @@ export const getBadgeDescription = async (id) => {
 
 export const saveBadgeDescription = async (id, text) => {
     try {
-        const res = await fetch(`/api/badges/${id}/description`, {
+        const res = await fetch(`${API_URL}/api/badges/${id}/description`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text })
@@ -68,7 +70,7 @@ export const deleteBadgeImage = async (id, url) => {
 
 export const saveBadgeAvailability = async (id, start, end) => {
     try {
-        const res = await fetch(`/api/badges/${id}/availability`, {
+        const res = await fetch(`${API_URL}/api/badges/${id}/availability`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ start, end })
@@ -82,7 +84,7 @@ export const saveBadgeAvailability = async (id, start, end) => {
 
 export const saveBadgeRelevance = async (id, isRelevant) => {
     try {
-        const res = await fetch(`/api/badges/${id}/relevance`, {
+        const res = await fetch(`${API_URL}/api/badges/${id}/relevance`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isRelevant })
@@ -96,7 +98,7 @@ export const saveBadgeRelevance = async (id, isRelevant) => {
 
 export const saveBadgeCost = async (id, cost, amount) => {
     try {
-        const res = await fetch(`/api/badges/${id}/cost`, {
+        const res = await fetch(`${API_URL}/api/badges/${id}/cost`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cost, amount })

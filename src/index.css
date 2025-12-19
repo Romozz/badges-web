@@ -8,6 +8,12 @@
     --header-height: 70px;
 }
 
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
     font-family: Inter, Roobert, "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -168,6 +174,47 @@ body {
     color: var(--color-text-primary);
 }
 
+.header-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+}
+
+.header-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-accent);
+}
+
+.header-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.header-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-accent);
+}
+
 /* Search Container */
 .search-container {
     position: relative;
@@ -252,15 +299,20 @@ body {
     margin: 0;
 }
 
-/* Badge Grid - Single Column List */
+/* Badge Grid - Grid Layout */
 .badge-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding-bottom: 4rem;
-    max-width: 1000px;
-    /* Limit width for better readability on large screens */
+    display: grid;
+    /* auto-fit stretches items to fill the row if fewer than max columns */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+    max-width: 1400px;
     margin: 0 auto;
+}
+
+.badge-section {
+    margin-bottom: 3rem;
+    /* Increased section spacing to prevent overlap */
 }
 
 /* Badge Card - Horizontal Strip */
@@ -269,6 +321,8 @@ body {
     color: inherit;
     display: block;
     width: 100%;
+    height: 100%;
+    /* Ensure link fills grid cell */
 }
 
 .badge-card {
@@ -276,60 +330,65 @@ body {
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 12px;
-    padding: 1.5rem 2rem;
+    padding: 1rem;
+    /* Compact padding */
     display: flex;
-    flex-direction: row;
-    /* Horizontal layout */
-    align-items: center;
-    justify-content: flex-start;
+    flex-direction: column;
+    align-items: flex-start;
     text-align: left;
     transition: all 0.2s ease;
     cursor: pointer;
     position: relative;
     overflow: hidden;
-    height: auto;
-    aspect-ratio: auto;
-    /* Reset rectangular aspect ratio */
+    height: 100%;
+    gap: 0.5rem;
 }
 
-/* Add gradient overlay like BadgeDetailPage */
+.badge-card:hover {
+    transform: translateY(-4px);
+    background: rgba(30, 30, 35, 0.6);
+    border-color: rgba(145, 70, 255, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
 .badge-card::after {
     content: '';
     position: absolute;
     top: 0;
+    left: 0;
     right: 0;
-    width: 200px;
-    height: 100%;
-    background: radial-gradient(circle at center right, rgba(145, 70, 255, 0.08), transparent 70%);
+    bottom: 0;
+    background: radial-gradient(circle at var(--gradient-pos, top right), var(--gradient-color, rgba(145, 70, 255, 0.1)), transparent 70%);
     pointer-events: none;
     transition: opacity 0.3s;
-}
-
-.badge-card:hover {
-    transform: translateX(4px);
-    /* Slide slightly right on hover instead of up */
-    background: rgba(30, 30, 35, 0.6);
-    border-color: rgba(145, 70, 255, 0.3);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .badge-card:hover::after {
     opacity: 0.8;
 }
 
+/* Internal Layout for Column Card */
+.badge-top-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    /* Restored gap */
+    width: 100%;
+}
+
 .badge-icon-container {
     flex: 0 0 auto;
-    width: auto;
-    margin-bottom: 0;
-    margin-right: 2rem;
+    width: 48px;
+    /* Compact icon container */
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .badge-icon {
-    width: 64px;
-    height: 64px;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
     transition: transform 0.3s ease;
@@ -342,64 +401,76 @@ body {
 .badge-info {
     flex: 1;
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 2rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    /* Tighter gap */
     width: 100%;
     z-index: 1;
 }
 
 .badge-title {
-    font-size: 1.25rem;
-    line-height: 1.2;
+    font-size: 1rem;
+    /* Compact title size */
+    line-height: 1.3;
     margin: 0;
     color: #efeff1;
     font-weight: 700;
-    display: block;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
-    height: auto;
-    -webkit-line-clamp: unset;
-    text-align: left;
-    flex: 1;
 }
 
 .badge-stats {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    width: auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    /* Added spread */
+    width: 100%;
     margin-top: 0;
-    min-width: 120px;
 }
 
 .stat-item {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    /* Right align stats */
-    gap: 0.75rem;
+    gap: 0.5rem;
     font-size: 0.95rem;
-    padding: 0.4rem 0.8rem;
-    background-color: rgba(255, 255, 255, 0.03);
-    border-radius: 6px;
-    transition: background-color 0.2s;
-    width: auto;
-}
-
-.badge-card:hover .stat-item {
-    background-color: rgba(255, 255, 255, 0.08);
-}
-
-.stat-label {
+    /* Increased stat size */
     color: var(--color-text-secondary);
 }
 
-.stat-value {
+.stat-icon {
     color: var(--color-accent);
+}
+
+.stat-value {
+    color: #efeff1;
+    font-weight: 600;
+}
+
+/* Cost Badges */
+.cost-badge {
+    font-size: 0.7rem;
     font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    display: inline-block;
+    letter-spacing: 0.05em;
+    margin-top: 0.35rem;
+}
+
+.cost-badge.free {
+    background-color: rgba(46, 204, 113, 0.15);
+    color: #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.cost-badge.paid {
+    background-color: rgba(231, 76, 60, 0.15);
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.2);
 }
 
 /* Badge Detail Page */
