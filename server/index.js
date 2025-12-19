@@ -297,6 +297,7 @@ app.get('/api/badges/:id', (req, res) => {
     const cost = (db.costs && (db.costs[id] || db.costs[baseId])) || null;
     const costAmount = (db.cost_amounts && (db.cost_amounts[id] || db.cost_amounts[baseId])) || null;
     const avail = (db.availability && (db.availability[id] || db.availability[baseId])) || null;
+    const types = (db.types && (db.types[id] || db.types[baseId])) || (cost ? [cost] : []); // Fallback
 
     // Compute current relevance for detail view too, just in case
     let isRelevant = false;
@@ -309,7 +310,7 @@ app.get('/api/badges/:id', (req, res) => {
         }
     }
 
-    res.json({ description: desc, images, isRelevant, cost, costAmount, availability: avail });
+    res.json({ description: desc, images, isRelevant, cost, costAmount, availability: avail, types });
 });
 
 // Update Description

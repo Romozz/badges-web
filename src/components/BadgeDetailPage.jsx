@@ -158,6 +158,14 @@ const BadgeDetailPage = () => {
         }, 0);
     };
 
+    const typeConfig = {
+        'free': { label: 'Бесплатный', color: '#2ecc71', bg: 'rgba(46, 204, 113, 0.15)', border: 'rgba(46, 204, 113, 0.3)' },
+        'paid': { label: 'Платный', color: '#e74c3c', bg: 'rgba(231, 76, 60, 0.15)', border: 'rgba(231, 76, 60, 0.3)' },
+        'local': { label: 'Локальный', color: '#3498db', bg: 'rgba(52, 152, 219, 0.15)', border: 'rgba(52, 152, 219, 0.3)' },
+        'canceled': { label: 'Отменён', color: '#95a5a6', bg: 'rgba(149, 165, 166, 0.15)', border: 'rgba(149, 165, 166, 0.3)' },
+        'technical': { label: 'Технический', color: '#9b59b6', bg: 'rgba(155, 89, 182, 0.15)', border: 'rgba(155, 89, 182, 0.3)' }
+    };
+
     if (!badge) return <div className="loading">Загрузка информации о значке...</div>;
 
     return (
@@ -176,7 +184,7 @@ const BadgeDetailPage = () => {
                 <div className="detail-images">
                     <div className="image-card">
                         <img src={highResUrl} alt={badge.name} />
-                        <span className="image-label">Icon</span>
+                        <span className="image-label">{badge.name}</span>
                     </div>
 
                     {/* Admin Image Controls */}
@@ -270,7 +278,35 @@ const BadgeDetailPage = () => {
 
                 <div className="detail-info">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-                        <h2 style={{ marginBottom: 0 }}>{badge.name}</h2>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <h2 style={{ marginBottom: 0 }}>{badge.name}</h2>
+                            {/* Render Types Badges */}
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                {types.map(type => {
+                                    const conf = typeConfig[type];
+                                    if (!conf) return null;
+                                    return (
+                                        <span key={type} style={{
+                                            fontSize: '0.75rem',
+                                            fontWeight: '600',
+                                            padding: '0.25rem 0.6rem',
+                                            borderRadius: '6px',
+                                            background: conf.bg,
+                                            color: conf.color,
+                                            border: `1px solid ${conf.border}`,
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.3rem'
+                                        }}>
+                                            {conf.label}
+                                            {type === 'paid' && costAmount && (
+                                                <span style={{ opacity: 0.8, fontSize: '0.7rem' }}>({costAmount})</span>
+                                            )}
+                                        </span>
+                                    );
+                                })}
+                            </div>
+                        </div>
 
                         {user && user.roles && user.roles.includes('admin') && (
                             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
