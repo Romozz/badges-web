@@ -6,7 +6,6 @@ import BadgeDetailPage from './components/BadgeDetailPage';
 import { AuthProvider } from './context/AuthContext';
 import { Helmet } from 'react-helmet-async';
 import AdminPage from './pages/AdminPage';
-import MyBadges from './pages/MyBadges';
 import StatsPage from './pages/StatsPage';
 import UserProfile from './pages/UserProfile';
 
@@ -34,7 +33,6 @@ function App() {
                                 <BadgeGrid />
                             </>
                         } />
-                        <Route path="/my-badges" element={<MyBadges />} />
                         <Route path="/stats" element={<StatsPage />} />
                         <Route path="/user/:username" element={<UserProfile />} />
                         <Route path="/admin" element={<AdminPage />} />

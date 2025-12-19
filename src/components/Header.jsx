@@ -23,13 +23,26 @@ const Header = () => {
                                     <span>Admin</span>
                                 </Link>
                             )}
-                            <Link to="/my-badges" className="header-icon-btn" title="Мои значки">
+                            <Link to={`/user/${user.name}`} className="header-icon-btn" title="Мои значки">
                                 <Award size={18} />
                             </Link>
                             <Link to="/stats" className="header-icon-btn" title="Статистика">
                                 <BarChart3 size={18} />
                             </Link>
-                            <span className="user-name">{user.name}</span>
+                            <Link
+                                to={`/user/${user.name}`}
+                                className="user-name"
+                                style={{
+                                    textDecoration: 'none',
+                                    color: 'var(--color-text-primary)',
+                                    fontWeight: '600',
+                                    transition: 'color 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
+                                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-primary)'}
+                            >
+                                {user.name}
+                            </Link>
                             <button onClick={logout} className="icon-btn" title="Выйти">
                                 <LogOut size={20} />
                             </button>
