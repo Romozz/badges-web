@@ -320,7 +320,10 @@ const StatsPage = () => {
                                         borderRadius: '8px',
                                         border: `1px solid ${currentTab.color}44`
                                     }}>
-                                        <currentTab.icon size={20} color={currentTab.color} />
+                                        {(() => {
+                                            const Icon = currentTab.icon;
+                                            return <Icon size={20} color={currentTab.color} />;
+                                        })()}
                                         <span style={{
                                             fontSize: '1.25rem',
                                             fontWeight: '700',
