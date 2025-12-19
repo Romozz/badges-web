@@ -5,7 +5,7 @@ import { Search, Filter, ArrowUpDown, X, ChevronDown, ChevronUp, Check, RotateCc
 import { useAuth } from '../context/AuthContext';
 
 
-const FilterDropdown = ({ label, value, options, onSelect, isOpen, onToggle, icon: Icon = Filter }) => {
+const FilterDropdown = ({ label, value, options, onSelect, isOpen, onToggle, icon: Icon = Filter, onReset, isActive }) => {
     return (
         <div style={{ position: 'relative' }}>
             <button
@@ -46,7 +46,41 @@ const FilterDropdown = ({ label, value, options, onSelect, isOpen, onToggle, ico
                         <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'rgba(255, 255, 255, 0.9)' }}>{value}</span>
                     </div>
                 </div>
-                {isOpen ? <ChevronUp size={16} color="rgba(255, 255, 255, 0.5)" /> : <ChevronDown size={16} color="rgba(255, 255, 255, 0.3)" />}
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {isActive && onReset && (
+                        <div
+                            role="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onReset();
+                            }}
+                            title="Сбросить этот фильтр"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '20px',
+                                height: '20px',
+                                borderRadius: '50%',
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                color: 'rgba(255, 255, 255, 0.6)',
+                                transition: 'all 0.2s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 100, 100, 0.2)';
+                                e.currentTarget.style.color = '#ff6b6b';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
+                            }}
+                        >
+                            <X size={12} />
+                        </div>
+                    )}
+                    {isOpen ? <ChevronUp size={16} color="rgba(255, 255, 255, 0.5)" /> : <ChevronDown size={16} color="rgba(255, 255, 255, 0.3)" />}
+                </div>
             </button>
 
             {isOpen && (
@@ -293,6 +327,8 @@ const BadgeGrid = () => {
                         onSelect={setOwnershipFilter}
                         isOpen={openDropdown === 'ownership'}
                         onToggle={() => setOpenDropdown(openDropdown === 'ownership' ? null : 'ownership')}
+                        isActive={ownershipFilter !== 'all'}
+                        onReset={() => setOwnershipFilter('all')}
                     />
 
                     <FilterDropdown
@@ -309,6 +345,8 @@ const BadgeGrid = () => {
                         onSelect={setCostFilter}
                         isOpen={openDropdown === 'cost'}
                         onToggle={() => setOpenDropdown(openDropdown === 'cost' ? null : 'cost')}
+                        isActive={costFilter !== 'all'}
+                        onReset={() => setCostFilter('all')}
                     />
 
                     <FilterDropdown
@@ -324,6 +362,8 @@ const BadgeGrid = () => {
                         isOpen={openDropdown === 'sort'}
                         onToggle={() => setOpenDropdown(openDropdown === 'sort' ? null : 'sort')}
                         icon={ArrowUpDown}
+                        isActive={sortBy !== 'default'}
+                        onReset={() => setSortBy('default')}
                     />
                 </div>
 
