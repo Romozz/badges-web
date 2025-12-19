@@ -396,6 +396,21 @@ const BadgeDetailPage = () => {
                                             />
                                         )}
                                     </div>
+
+                                    <button
+                                        onClick={() => handleCostChange('local')}
+                                        style={{
+                                            padding: '0.5rem 1rem',
+                                            borderRadius: '8px',
+                                            border: '1px solid ' + (cost === 'local' ? '#3498db' : 'rgba(255,255,255,0.2)'),
+                                            background: cost === 'local' ? 'rgba(52, 152, 219, 0.2)' : 'transparent',
+                                            color: cost === 'local' ? '#3498db' : 'var(--color-text-secondary)',
+                                            cursor: 'pointer',
+                                            fontWeight: '600'
+                                        }}
+                                    >
+                                        {cost === 'local' ? 'Локальный' : 'Сделать локальным'}
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -460,7 +475,7 @@ const BadgeDetailPage = () => {
                                             {description}
                                         </ReactMarkdown>
                                     ) : (
-                                        <span style={{ color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>Описание отсутствует</span>
+                                        <span style={{ color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>{badge.description}</span>
                                     )}
                                 </div>
                                 {user && user.roles && user.roles.includes('admin') && (

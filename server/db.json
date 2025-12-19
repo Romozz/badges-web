@@ -20,7 +20,8 @@
     "raging-wolf-helm": "paid",
     "twitch-recap-2023": "free",
     "purple-noob": "free",
-    "fallout-season-2-ghoul": "paid"
+    "fallout-season-2-ghoul": "paid",
+    "tft-paris-open": "local"
   },
   "cost_amounts": {
     "premium": 3,
@@ -149,5 +150,7 @@
       "end": null
     }
   },
-  "admins": []
+  "admins": [
+    "mejkiz"
+  ]
 }

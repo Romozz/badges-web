@@ -371,8 +371,8 @@ app.get('/api/me/badges', async (req, res) => {
                     "giftRecipientLogin": login,
                     "isViewerBadgeCollectionEnabled": true,
                     "withStandardGifting": true,
-                    "badgeSourceChannelID": channelID,
-                    "badgeSourceChannelLogin": channelLogin
+                    "badgeSourceChannelID": '12826',
+                    "badgeSourceChannelLogin": 'twitch'
                 },
                 "extensions": {
                     "persistedQuery": {
@@ -574,6 +574,119 @@ app.get('/api/stats/overview', (req, res) => {
         res.status(500).json({ error: 'Failed to fetch overview' });
     }
 });
+
+// Get user profile by username
+app.get('/api/users/:username', async (req, res) => {
+    try {
+        const { username } = req.params;
+        const userData = getUserBadgesData();
+
+        // Find user by login (case-insensitive)
+        let userEntry = Object.values(userData).find(
+            u => u.login.toLowerCase() === username.toLowerCase()
+        );
+
+        // If user not found in DB, try to fetch from Twitch
+        if (!userEntry) {
+            console.log(`User ${username} not found in DB, fetching from Twitch...`);
+console.log(process.env.CLIENT_ID)
+            try {
+                // Fetch user ID from Twitch Helix API
+                const userResponse = await axios.get('https://api.twitch.tv/helix/users', {
+                    params: { login: username },
+                    headers: {
+                        'Client-ID': 'gp762nuuoqcoxypju8c569th9wz7q5',
+                        'Authorization': `Bearer 72z5608eyqjf2ltoqkuwti0hxat3p3`
+                    }
+                });
+
+                const twitchUser = userResponse.data.data[0];
+                const userId = twitchUser.id;
+                const login = twitchUser.login;
+                // Fetch badges using GQL ViewerCard query
+                const payload = [
+            {
+                "operationName": "ViewerCard",
+                "variables": {
+                    "channelID": userId,
+                    "channelLogin": login,
+                    "hasChannelID": true,
+                    "giftRecipientLogin": login,
+                    "isViewerBadgeCollectionEnabled": true,
+                    "withStandardGifting": true,
+                    "badgeSourceChannelID": '12826',
+                    "badgeSourceChannelLogin": 'twitch'
+                },
+                "extensions": {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": "d3b821f55301d3b4248b0d4312043e2e940d9ada08216f75221da7b68bcbfa0f"
+                    }
+                }
+            }
+        ];
+                const gqlResponse = await axios.post('https://gql.twitch.tv/gql', payload, {
+            headers: {
+                'Client-ID': GQL_CLIENT_ID,
+                'Content-Type': 'application/json'
+            }
+        });
+                const data = gqlResponse.data[0].data;
+                if (!data || !data.channelViewer || !data.channelViewer.earnedBadges) {
+                    return res.status(404).json({ error: 'No badges found for user' });
+                }
+
+                const badges = data.channelViewer.earnedBadges.map(b => b.title);
+
+                // Calculate stats
+                const allBadges = badgesCache || [];
+                const badgeMap = new Map(allBadges.map(b => [b.name, b]));
+
+                let freeCount = 0;
+                let paidCount = 0;
+
+                badges.forEach(badgeName => {
+                    const badge = badgeMap.get(badgeName);
+                    if (badge) {
+                        if (badge.cost === 'free') freeCount++;
+                        else if (badge.cost === 'paid') paidCount++;
+                    }
+                });
+
+                // Save to database
+                const newUserData = getUserBadgesData();
+                newUserData[userId] = {
+                    login,
+                    badges,
+                    lastUpdated: new Date().toISOString(),
+                    stats: {
+                        total: badges.length,
+                        free: freeCount,
+                        paid: paidCount
+                    }
+                };
+                saveUserBadgesData(newUserData);
+
+                userEntry = newUserData[userId];
+                console.log(`User ${username} fetched from Twitch and saved to DB`);
+            } catch (twitchError) {
+                console.error('Error fetching from Twitch:', twitchError.message);
+                return res.status(404).json({ error: 'User not found' });
+            }
+        }
+
+        res.json({
+            login: userEntry.login,
+            badges: userEntry.badges,
+            stats: userEntry.stats,
+            lastUpdated: userEntry.lastUpdated
+        });
+    } catch (error) {
+        console.error("Error fetching user profile:", error.message);
+        res.status(500).json({ error: 'Failed to fetch user profile' });
+    }
+});
+
 
 
 // Add Image URL

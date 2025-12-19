@@ -53,6 +53,8 @@ const BadgeGrid = () => {
             filtered = filtered.filter(badge => badge.cost === 'free');
         } else if (costFilter === 'paid') {
             filtered = filtered.filter(badge => badge.cost === 'paid');
+        } else if (costFilter === 'local') {
+            filtered = filtered.filter(badge => badge.cost === 'local');
         }
 
         return filtered;
@@ -233,6 +235,22 @@ const BadgeGrid = () => {
                             }}
                         >
                             Платные
+                        </button>
+                        <button
+                            onClick={() => setCostFilter('local')}
+                            style={{
+                                background: costFilter === 'local' ? 'rgba(52, 152, 219, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                border: costFilter === 'local' ? '1px solid rgba(52, 152, 219, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '20px',
+                                padding: '0.4rem 0.9rem',
+                                color: costFilter === 'local' ? '#3498db' : 'rgba(255, 255, 255, 0.6)',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                fontWeight: costFilter === 'local' ? '600' : '400',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            Локальные
                         </button>
                     </div>
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Trophy, TrendingUp, Users, Award, Sparkles } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { Link } from 'react-router-dom';
 
 const StatsPage = () => {
     const [leaderboards, setLeaderboards] = useState({
@@ -181,13 +182,20 @@ const StatsPage = () => {
 
                                     {/* User */}
                                     <div style={{ flex: 1 }}>
-                                        <div style={{
-                                            fontSize: '1.1rem',
-                                            fontWeight: '600',
-                                            color: '#fff'
-                                        }}>
+                                        <Link
+                                            to={`/user/${entry.login}`}
+                                            style={{
+                                                fontSize: '1.1rem',
+                                                fontWeight: '600',
+                                                color: '#fff',
+                                                textDecoration: 'none',
+                                                transition: 'color 0.2s ease'
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.color = currentTab.color}
+                                            onMouseLeave={(e) => e.currentTarget.style.color = '#fff'}
+                                        >
                                             {entry.login}
-                                        </div>
+                                        </Link>
                                         <div style={{
                                             fontSize: '0.85rem',
                                             color: 'rgba(255, 255, 255, 0.5)'

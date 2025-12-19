@@ -84,8 +84,8 @@ const BadgeCard = ({ badge, status }) => {
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <h3 className="badge-title">{name}</h3>
                         {cost && (
-                            <span className={`cost-badge ${cost === 'free' ? 'free' : 'paid'}`}>
-                                {cost === 'free' ? 'Бесплатно' : 'Платно'}
+                            <span className={`cost-badge ${cost === 'free' ? 'free' : cost === 'paid' ? 'paid' : 'local'}`}>
+                                {cost === 'free' ? 'Бесплатно' : cost === 'paid' ? 'Платно' : 'Локальный'}
                             </span>
                         )}
                     </div>

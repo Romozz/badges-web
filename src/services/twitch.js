@@ -8,7 +8,8 @@ export const fetchGlobalBadges = async () => {
             throw new Error('Network response was not ok');
         }
         const json = await response.json();
-        return json.data || [];
+        // API now returns array directly, not { data: badges }
+        return Array.isArray(json) ? json : [];
     } catch (error) {
         console.error("Failed to fetch badges from Backend API.", error);
         return [];

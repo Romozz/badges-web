@@ -8,6 +8,7 @@ import { Helmet } from 'react-helmet-async';
 import AdminPage from './pages/AdminPage';
 import MyBadges from './pages/MyBadges';
 import StatsPage from './pages/StatsPage';
+import UserProfile from './pages/UserProfile';
 
 function App() {
     return (
@@ -35,6 +36,7 @@ function App() {
                         } />
                         <Route path="/my-badges" element={<MyBadges />} />
                         <Route path="/stats" element={<StatsPage />} />
+                        <Route path="/user/:username" element={<UserProfile />} />
                         <Route path="/admin" element={<AdminPage />} />
                         <Route path="/:badgeId" element={<BadgeDetailPage />} />
                     </Routes>

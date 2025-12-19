@@ -473,6 +473,12 @@ body {
     border: 1px solid rgba(231, 76, 60, 0.2);
 }
 
+.cost-badge.local {
+    background-color: rgba(52, 152, 219, 0.15);
+    color: #3498db;
+    border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
 /* Badge Detail Page */
 .badge-detail-page {
     animation: fadeIn 0.4s ease-out;
