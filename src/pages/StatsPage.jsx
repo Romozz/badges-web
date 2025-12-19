@@ -15,12 +15,11 @@ const StatsPage = () => {
     const [overview, setOverview] = useState(null);
     const [activeTab, setActiveTab] = useState('total');
     const [loading, setLoading] = useState(true);
-    const [displayCount, setDisplayCount] = useState(10); // Pagination
+    const [displayCount, setDisplayCount] = useState(10);
 
     useEffect(() => {
         const baseUrl = import.meta.env.VITE_API_URL || '';
 
-        // Fetch all leaderboards
         Promise.all([
             fetch(`${baseUrl}/api/stats/leaderboard?type=total`).then(r => r.json()),
             fetch(`${baseUrl}/api/stats/leaderboard?type=free`).then(r => r.json()),
@@ -39,6 +38,11 @@ const StatsPage = () => {
             });
     }, []);
 
+    // Reset display count when tab changes
+    useEffect(() => {
+        setDisplayCount(10);
+    }, [activeTab]);
+
     if (loading) {
         return <div className="loading">Загрузка статистики...</div>;
     }
@@ -53,11 +57,16 @@ const StatsPage = () => {
     const currentTab = tabs.find(t => t.id === activeTab);
     const currentLeaderboard = leaderboards[activeTab];
 
-    // Pagination and user position
+    // Pagination
     const displayedUsers = currentLeaderboard.slice(0, displayCount);
+    const hasMore = displayCount < currentLeaderboard.length;
+
+    // User position
     const userPosition = user ? currentLeaderboard.findIndex(entry => entry.login === user.name) + 1 : 0;
     const userEntry = userPosition > 0 ? currentLeaderboard[userPosition - 1] : null;
-    const showLoadMore = displayCount < currentLeaderboard.length;
+    const showUserCard = userEntry && userPosition > displayCount;
+
+    const Icon = currentTab.icon;
 
     return (
         <>
@@ -70,6 +79,7 @@ const StatsPage = () => {
                 <meta property="og:type" content="website" />
                 <meta name="twitter:card" content="summary_large_image" />
             </Helmet>
+
             <div className="content-header">
                 <h2>Статистика</h2>
                 <p>Лидеры по коллекциям значков</p>
@@ -115,7 +125,7 @@ const StatsPage = () => {
                 justifyContent: 'center'
             }}>
                 {tabs.map(tab => {
-                    const Icon = tab.icon;
+                    const TabIcon = tab.icon;
                     return (
                         <button
                             key={tab.id}
@@ -135,7 +145,7 @@ const StatsPage = () => {
                                 gap: '0.5rem'
                             }}
                         >
-                            <Icon size={18} />
+                            <TabIcon size={18} />
                             {tab.label}
                         </button>
                     );
@@ -161,7 +171,6 @@ const StatsPage = () => {
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         {displayedUsers.map((entry, index) => {
-                            const Icon = currentTab.icon;
                             const medals = ['🥇', '🥈', '🥉'];
 
                             return (
@@ -178,7 +187,6 @@ const StatsPage = () => {
                                         transition: 'all 0.2s ease'
                                     }}
                                 >
-                                    {/* Rank */}
                                     <div style={{
                                         fontSize: '1.5rem',
                                         fontWeight: '700',
@@ -189,7 +197,6 @@ const StatsPage = () => {
                                         {index < 3 ? medals[index] : `#${index + 1}`}
                                     </div>
 
-                                    {/* User */}
                                     <div style={{ flex: 1 }}>
                                         <Link
                                             to={`/user/${entry.login}`}
@@ -213,7 +220,6 @@ const StatsPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* Count */}
                                     <div style={{
                                         display: 'flex',
                                         alignItems: 'center',
@@ -237,10 +243,11 @@ const StatsPage = () => {
                         })}
 
                         {/* Load More Button */}
-                        {showLoadMore && (
+                        {hasMore && (
                             <button
                                 onClick={() => setDisplayCount(prev => prev + 10)}
                                 style={{
+                                    width: '100%',
                                     padding: '1rem',
                                     background: 'rgba(145, 70, 255, 0.1)',
                                     border: '2px solid rgba(145, 70, 255, 0.3)',
@@ -265,8 +272,8 @@ const StatsPage = () => {
                             </button>
                         )}
 
-                        {/* Current User Position (if not in displayed list) */}
-                        {userEntry && userPosition > displayCount && (
+                        {/* User Position Card */}
+                        {showUserCard && (
                             <div style={{
                                 marginTop: '2rem',
                                 padding: '1.5rem',
@@ -320,10 +327,7 @@ const StatsPage = () => {
                                         borderRadius: '8px',
                                         border: `1px solid ${currentTab.color}44`
                                     }}>
-                                        {(() => {
-                                            const Icon = currentTab.icon;
-                                            return <Icon size={20} color={currentTab.color} />;
-                                        })()}
+                                        <Icon size={20} color={currentTab.color} />
                                         <span style={{
                                             fontSize: '1.25rem',
                                             fontWeight: '700',
