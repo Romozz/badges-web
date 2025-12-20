@@ -310,7 +310,42 @@ app.get('/api/badges/:id', (req, res) => {
         }
     }
 
-    res.json({ description: desc, images, isRelevant, cost, costAmount, availability: avail, types });
+    // Calculate Site Stats
+    let siteStats = {
+        count: 0,
+        total: 0,
+        percentage: 0
+    };
+
+    try {
+        const userData = getUserBadgesData();
+        const users = Object.values(userData);
+        siteStats.total = users.length;
+
+        // We need the Badge Name (Title) to match against user data
+        // Search in cache
+        const cachedBadge = badgesCache ? badgesCache.find(b => b.badge === id) : null;
+
+        if (cachedBadge && users.length > 0) {
+            const badgeName = cachedBadge.name;
+            const count = users.filter(u => u.badges && u.badges.includes(badgeName)).length;
+            siteStats.count = count;
+            siteStats.percentage = (count / siteStats.total) * 100;
+        }
+    } catch (e) {
+        console.error("Error calculating site stats:", e);
+    }
+
+    res.json({
+        description: desc,
+        images,
+        isRelevant,
+        cost,
+        costAmount,
+        availability: avail,
+        types,
+        site_stats: siteStats
+    });
 });
 
 // Update Description
@@ -378,6 +413,7 @@ app.get('/api/me/badges', async (req, res) => {
                 "variables": {
                     "channelID": channelID,
                     "channelLogin": channelLogin,
+                    "targetLogin": login,
                     "hasChannelID": true,
                     "giftRecipientLogin": login,
                     "isViewerBadgeCollectionEnabled": true,
@@ -733,7 +769,7 @@ app.delete('/api/badges/:id/images', (req, res) => {
     if (!req.session.user || !req.session.user.roles.includes('admin')) {
         return res.status(403).json({ error: 'Unauthorized' });
     }
-    const { url } = req.body;
+    const url = req.body.url || req.query.url;
     const db = getDb();
 
     if (db.images[req.params.id]) {
@@ -914,6 +950,69 @@ app.post('/api/admin/recalculate-stats', (req, res) => {
     res.json({ success: true, count: updatedCount });
 });
 
+// --- Dynamic Badge Types Endpoints ---
+
+// Get all defined badge types (Public)
+app.get('/api/types', (req, res) => {
+    const db = getDb();
+    const types = db.type_definitions || {};
+    res.json(types);
+});
+
+// Add or Update a badge type (Admin only)
+app.post('/api/admin/types', (req, res) => {
+    if (!req.session.user || !req.session.user.roles.includes('admin')) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const { key, label, color, description } = req.body;
+    if (!key || !label || !color) {
+        return res.status(400).json({ error: 'Missing required fields: key, label, color' });
+    }
+
+    const db = getDb();
+    if (!db.type_definitions) db.type_definitions = {};
+
+    // Hex to RGB helper
+    const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    const rgb = hexToRgb(color);
+    const bg = rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)` : color;
+    const border = rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)` : color;
+
+    db.type_definitions[key] = {
+        label,
+        color,
+        bg,
+        border,
+        description: description || ''
+    };
+    saveDb(db);
+    res.json({ success: true, types: db.type_definitions });
+});
+
+// Delete a badge type (Admin only)
+app.delete('/api/admin/types', (req, res) => {
+    if (!req.session.user || !req.session.user.roles.includes('admin')) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const { key } = req.body;
+    if (!key) return res.status(400).json({ error: 'Missing key' });
+
+    const db = getDb();
+    if (db.type_definitions && db.type_definitions[key]) {
+        delete db.type_definitions[key];
+        saveDb(db);
+    }
+    res.json({ success: true, types: db.type_definitions });
+});
+
 // ============================================
 // SSR Metadata for Social Media Crawlers
 // ============================================
@@ -950,7 +1049,7 @@ function generateHTMLWithMeta(metaTags) {
 }
 
 // SSR for badge pages
-app.get('/badge/:id', async (req, res, next) => {
+app.get('/:id', async (req, res, next) => {
     const userAgent = req.headers['user-agent'] || '';
 
     if (!isCrawler(userAgent)) {
@@ -960,7 +1059,7 @@ app.get('/badge/:id', async (req, res, next) => {
     try {
         const badgeId = req.params.id;
         const badges = badgesCache || [];
-        const badge = badges.find(b => b.id === badgeId);
+        const badge = badges.find(b => b.badge === badgeId);
 
         if (!badge) {
             return next();
@@ -968,7 +1067,7 @@ app.get('/badge/:id', async (req, res, next) => {
 
         const title = `${badge.name} - Badges Tracker`;
         const description = badge.description || `Глобальный значок Twitch: ${badge.name}`;
-        const image = badge.image || 'https://badges.news/default-badge.png';
+        const image = badge.url || 'https://badges.news/default-badge.png';
         const url = `https://badges.news/badge/${badgeId}`;
 
         const metaTags = `
@@ -1079,6 +1178,8 @@ app.get('/user/:username', async (req, res, next) => {
         next();
     }
 });
+
+
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
