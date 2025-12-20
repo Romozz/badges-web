@@ -354,8 +354,12 @@ app.get('/api/badges/:id', (req, res) => {
         console.error("Error calculating site stats:", e);
     }
 
+    // Find base info from cache
+    const cachedBadge = (badgesCache || []).find(b => b.badge === id);
+
     res.json({
-        description: desc,
+        ...(cachedBadge || {}),
+        description: desc || (cachedBadge ? cachedBadge.description : null),
         images,
         isRelevant,
         cost,

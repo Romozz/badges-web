@@ -8,6 +8,7 @@ import { Helmet } from 'react-helmet-async';
 import AdminPage from './pages/AdminPage';
 import StatsPage from './pages/StatsPage';
 import UserProfile from './pages/UserProfile';
+import OverlayPage from './pages/OverlayPage';
 
 function App() {
     return (
@@ -33,6 +34,7 @@ function App() {
                                 <BadgeGrid />
                             </>
                         } />
+                        <Route path="/overlay" element={<OverlayPage />} />
                         <Route path="/stats" element={<StatsPage />} />
                         <Route path="/user/:username" element={<UserProfile />} />
                         <Route path="/admin" element={<AdminPage />} />

@@ -41,7 +41,9 @@
       "total": 33,
       "free": 2,
       "paid": 2
-    }
+    },
+    "display_name": "Twitch",
+    "color": "#8A2BE2"
   },
   "32155044": {
     "login": "5opka",
@@ -56,7 +58,9 @@
       "total": 4,
       "free": 1,
       "paid": 0
-    }
+    },
+    "display_name": "5opka",
+    "color": "#FF4500"
   },
   "36029255": {
     "login": "riotgames",
@@ -80,7 +84,9 @@
       "total": 13,
       "free": 1,
       "paid": 0
-    }
+    },
+    "display_name": "Riot Games",
+    "color": "#EB0029"
   },
   "92473777": {
     "login": "discord",
@@ -93,7 +99,9 @@
       "total": 2,
       "free": 0,
       "paid": 0
-    }
+    },
+    "display_name": "Discord",
+    "color": "#1E90FF"
   },
   "99899949": {
     "login": "bratishkinoff",
@@ -117,7 +125,9 @@
       "total": 13,
       "free": 1,
       "paid": 0
-    }
+    },
+    "display_name": "bratishkinoff",
+    "color": "#FF0000"
   },
   "116738112": {
     "login": "pwgood",
@@ -193,7 +203,9 @@
       "total": 65,
       "free": 5,
       "paid": 3
-    }
+    },
+    "display_name": "PWGood",
+    "color": "#DAA520"
   },
   "132417535": {
     "login": "first",
@@ -205,7 +217,9 @@
       "total": 1,
       "free": 0,
       "paid": 0
-    }
+    },
+    "display_name": "FIRST",
+    "color": null
   },
   "248345888": {
     "login": "mejkiz",
@@ -299,7 +313,9 @@
       "total": 83,
       "free": 5,
       "paid": 4
-    }
+    },
+    "display_name": "Mejkiz",
+    "color": "#660066"
   },
   "518169065": {
     "login": "marvel",
@@ -312,7 +328,9 @@
       "total": 2,
       "free": 1,
       "paid": 0
-    }
+    },
+    "display_name": "Marvel",
+    "color": null
   },
   "681579330": {
     "login": "mellsher",
@@ -333,10 +351,13 @@
       "total": 10,
       "free": 1,
       "paid": 0
-    }
+    },
+    "display_name": "mellsher",
+    "color": "#8A2BE2"
   },
   "999999999": {
     "login": "rom0zzz",
+    "display_name": "rom0zzz",
     "badges": [
       "Arcane Season 2 Premiere",
       "Borderlands 4 Badge - Vault Symbol",
@@ -356,7 +377,7 @@
       "Video Games Day",
       "ZEVENT 2024"
     ],
-    "lastUpdated": "2025-12-20T13:32:29.722Z",
+    "lastUpdated": "2025-12-20T23:15:50.758Z",
     "isRegistered": true,
     "color": null,
     "stats": {
