@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { User, Clock, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { fetchGlobalBadges, getBadgeDescription, saveBadgeDescription, saveBadgeImage, deleteBadgeImage, saveBadgeAvailability, saveBadgeCost, saveBadgeTypes } from '../services/twitch';
+import { fetchGlobalBadges, getBadgeDescription, saveBadgeDescription, saveBadgeImage, deleteBadgeImage, saveBadgeAvailability, saveBadgeCost, saveBadgeTypes, fetchBadgeTypes } from '../services/twitch';
 import ReactMarkdown from 'react-markdown';
 import { Helmet } from 'react-helmet-async';
 
@@ -14,14 +15,18 @@ const BadgeDetailPage = () => {
     const [images, setImages] = useState([]);
     const [isRelevant, setIsRelevant] = useState(false);
     const [availability, setAvailability] = useState({ start: null, end: null });
-    const [types, setTypes] = useState([]); // NEW: array of types
+    const [types, setTypes] = useState([]);
     const [costAmount, setCostAmount] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState('');
     const [newImageUrl, setNewImageUrl] = useState('');
     const [isChatLightMode, setIsChatLightMode] = useState(false);
+    const [typeConfig, setTypeConfig] = useState({});
+    const [siteStats, setSiteStats] = useState(null);
 
     useEffect(() => {
+        fetchBadgeTypes().then(setTypeConfig);
+
         fetchGlobalBadges().then(data => {
             const found = data.find(b => b.badge === badgeId);
             if (found) {
@@ -33,13 +38,15 @@ const BadgeDetailPage = () => {
                         setImages(data.images || []);
                         setIsRelevant(!!data.isRelevant);
                         setAvailability(data.availability || { start: null, end: null });
-                        setTypes(data.types || []); // NEW: load types array
+                        setTypes(data.types || []);
                         setCostAmount(data.costAmount || '');
+                        setSiteStats(data.site_stats || null);
                     })
                     .catch(err => console.error(err));
             }
         });
     }, [badgeId]);
+
 
     // Matomo Tracking
     useEffect(() => {
@@ -156,14 +163,6 @@ const BadgeDetailPage = () => {
             textarea.focus();
             textarea.setSelectionRange(start + before.length, end + before.length);
         }, 0);
-    };
-
-    const typeConfig = {
-        'free': { label: 'Бесплатный', color: '#2ecc71', bg: 'rgba(46, 204, 113, 0.15)', border: 'rgba(46, 204, 113, 0.3)' },
-        'paid': { label: 'Платный', color: '#e74c3c', bg: 'rgba(231, 76, 60, 0.15)', border: 'rgba(231, 76, 60, 0.3)' },
-        'local': { label: 'Локальный', color: '#3498db', bg: 'rgba(52, 152, 219, 0.15)', border: 'rgba(52, 152, 219, 0.3)' },
-        'canceled': { label: 'Отменён', color: '#95a5a6', bg: 'rgba(149, 165, 166, 0.15)', border: 'rgba(149, 165, 166, 0.3)' },
-        'technical': { label: 'Технический', color: '#9b59b6', bg: 'rgba(155, 89, 182, 0.15)', border: 'rgba(155, 89, 182, 0.3)' }
     };
 
     if (!badge) return <div className="loading">Загрузка информации о значке...</div>;
@@ -387,75 +386,48 @@ const BadgeDetailPage = () => {
 
 
                                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', background: types.includes('free') ? 'rgba(46, 204, 113, 0.1)' : 'transparent', border: '1px solid ' + (types.includes('free') ? '#2ecc71' : 'rgba(255,255,255,0.2)') }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={types.includes('free')}
-                                            onChange={() => handleTypeToggle('free')}
-                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                        />
-                                        <span style={{ color: types.includes('free') ? '#2ecc71' : 'var(--color-text-secondary)', fontWeight: '600' }}>Бесплатный</span>
-                                    </label>
-
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', background: types.includes('paid') ? 'rgba(231, 76, 60, 0.1)' : 'transparent', border: '1px solid ' + (types.includes('paid') ? '#e74c3c' : 'rgba(255,255,255,0.2)') }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={types.includes('paid')}
-                                            onChange={() => handleTypeToggle('paid')}
-                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                        />
-                                        <span style={{ color: types.includes('paid') ? '#e74c3c' : 'var(--color-text-secondary)', fontWeight: '600' }}>Платный</span>
-                                        {types.includes('paid') && (
+                                    {Object.entries(typeConfig).map(([key, config]) => (
+                                        <label key={key} style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            cursor: 'pointer',
+                                            padding: '0.5rem',
+                                            borderRadius: '8px',
+                                            background: types.includes(key) ? (config.bg || config.color) : 'transparent',
+                                            border: '1px solid ' + (types.includes(key) ? (config.border || config.color) : 'rgba(255,255,255,0.2)')
+                                        }}>
                                             <input
-                                                type="number"
-                                                placeholder="#"
-                                                value={costAmount || ''}
-                                                onChange={(e) => setCostAmount(e.target.value)}
-                                                onBlur={saveAmount}
-                                                style={{
-                                                    width: '50px',
-                                                    padding: '0.3rem',
-                                                    borderRadius: '4px',
-                                                    border: '1px solid rgba(231, 76, 60, 0.5)',
-                                                    background: 'rgba(0,0,0,0.3)',
-                                                    color: '#fff',
-                                                    fontWeight: '600',
-                                                    textAlign: 'center'
-                                                }}
-                                                title="Number of subs"
+                                                type="checkbox"
+                                                checked={types.includes(key)}
+                                                onChange={() => handleTypeToggle(key)}
+                                                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                                             />
-                                        )}
-                                    </label>
+                                            <span style={{ color: types.includes(key) ? config.color : 'var(--color-text-secondary)', fontWeight: '600' }}>{config.label}</span>
 
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', background: types.includes('local') ? 'rgba(52, 152, 219, 0.1)' : 'transparent', border: '1px solid ' + (types.includes('local') ? '#3498db' : 'rgba(255,255,255,0.2)') }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={types.includes('local')}
-                                            onChange={() => handleTypeToggle('local')}
-                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                        />
-                                        <span style={{ color: types.includes('local') ? '#3498db' : 'var(--color-text-secondary)', fontWeight: '600' }}>Локальный</span>
-                                    </label>
-
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', background: types.includes('canceled') ? 'rgba(149, 165, 166, 0.1)' : 'transparent', border: '1px solid ' + (types.includes('canceled') ? '#95a5a6' : 'rgba(255,255,255,0.2)') }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={types.includes('canceled')}
-                                            onChange={() => handleTypeToggle('canceled')}
-                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                        />
-                                        <span style={{ color: types.includes('canceled') ? '#95a5a6' : 'var(--color-text-secondary)', fontWeight: '600' }}>Отменённый</span>
-                                    </label>
-
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', background: types.includes('technical') ? 'rgba(155, 89, 182, 0.1)' : 'transparent', border: '1px solid ' + (types.includes('technical') ? '#9b59b6' : 'rgba(255,255,255,0.2)') }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={types.includes('technical')}
-                                            onChange={() => handleTypeToggle('technical')}
-                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                        />
-                                        <span style={{ color: types.includes('technical') ? '#9b59b6' : 'var(--color-text-secondary)', fontWeight: '600' }}>Технический</span>
-                                    </label>
+                                            {key === 'paid' && types.includes('paid') && (
+                                                <input
+                                                    type="number"
+                                                    placeholder="#"
+                                                    value={costAmount || ''}
+                                                    onChange={(e) => setCostAmount(e.target.value)}
+                                                    onBlur={saveAmount}
+                                                    style={{
+                                                        width: '50px',
+                                                        padding: '0.3rem',
+                                                        borderRadius: '4px',
+                                                        border: '1px solid rgba(231, 76, 60, 0.5)',
+                                                        background: 'rgba(0,0,0,0.3)',
+                                                        color: '#fff',
+                                                        fontWeight: '600',
+                                                        textAlign: 'center'
+                                                    }}
+                                                    title="Number of subs"
+                                                    onClick={(e) => e.stopPropagation()} // Prevent toggling when clicking input
+                                                />
+                                            )}
+                                        </label>
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -530,31 +502,106 @@ const BadgeDetailPage = () => {
                         )}
                     </div>
 
-                    {/* Availability Display for All Users */}
-                    {(availability.start || availability.end) && (
-                        <div className="info-row">
-                            {availability.start && (
-                                <div>
-                                    <span className="label">Начало: </span>
-                                    <span className="value" style={{ color: '#efeff1' }}>
-                                        {new Date(availability.start).toLocaleString()}
-                                    </span>
-                                </div>
-                            )}
-                            {availability.end && (
-                                <div>
-                                    <span className="label">Конец: </span>
-                                    <span className="value" style={{ color: '#efeff1' }}>
-                                        {new Date(availability.end).toLocaleString()}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    {/* Modern Stats Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginTop: '1rem', marginBottom: '1.5rem' }}>
 
-                    <div className="info-row">
-                        <span className="label">Пользователей:</span>
-                        <span className="value">{badge.user_count.toLocaleString()} ({badge.percentage.toFixed(4)}%)</span>
+                        {/* User Count Card */}
+                        <div style={{
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid rgba(255, 255, 255, 0.05)',
+                            borderRadius: '12px',
+                            padding: '1rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.5rem'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#aaa', fontSize: '0.85rem', fontWeight: '500' }}>
+                                <User size={16} />
+                                <span>Пользователей</span>
+                            </div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#fff' }}>
+                                {badge.user_count.toLocaleString()}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#666' }}>
+                                <div>{badge.percentage.toFixed(4)}% от всех (Twitch)</div>
+                                {siteStats && (
+                                    <div style={{ color: 'var(--color-accent)', marginTop: '2px' }}>
+                                        {siteStats.percentage.toFixed(2)}% от сайта ({siteStats.count})
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Start Date Card */}
+                        {availability.start && (
+                            <div style={{
+                                background: 'rgba(255, 255, 255, 0.03)',
+                                border: '1px solid rgba(255, 255, 255, 0.05)',
+                                borderRadius: '12px',
+                                padding: '1rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.5rem'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#aaa', fontSize: '0.85rem', fontWeight: '500' }}>
+                                    <Clock size={16} style={{ color: '#a8d8ea' }} />
+                                    <span>Начало</span>
+                                </div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff' }}>
+                                    {new Date(availability.start).toLocaleDateString()}
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: '#888' }}>
+                                    {new Date(availability.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* End Date Card */}
+                        {availability.end && (
+                            <div style={{
+                                background: 'rgba(255, 255, 255, 0.03)',
+                                border: '1px solid rgba(255, 255, 255, 0.05)',
+                                borderRadius: '12px',
+                                padding: '1rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.5rem'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#aaa', fontSize: '0.85rem', fontWeight: '500' }}>
+                                    <Clock size={16} style={{ color: '#ffaaa5' }} />
+                                    <span>Конец</span>
+                                </div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff' }}>
+                                    {new Date(availability.end).toLocaleDateString()}
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: '#888' }}>
+                                    {new Date(availability.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Status Card (if Relevant logic exists) */}
+                        <div style={{
+                            background: isRelevant ? 'rgba(46, 204, 113, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+                            border: `1px solid ${isRelevant ? 'rgba(46, 204, 113, 0.2)' : 'rgba(255, 255, 255, 0.05)'}`,
+                            borderRadius: '12px',
+                            padding: '1rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.5rem'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: isRelevant ? '#2ecc71' : '#aaa', fontSize: '0.85rem', fontWeight: '500' }}>
+                                <Check size={16} />
+                                <span>Статус</span>
+                            </div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: isRelevant ? '#2ecc71' : '#aaa' }}>
+                                {isRelevant ? 'Актуален' : 'Неактуален'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: isRelevant ? 'rgba(46, 204, 113, 0.7)' : '#666' }}>
+                                {isRelevant ? 'Значок можно получить прямо сейчас!' : 'Значок больше нельзя получить'}
+                            </div>
+                        </div>
+
                     </div>
 
                 </div>

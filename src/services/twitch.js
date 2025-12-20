@@ -43,7 +43,7 @@ export const saveBadgeDescription = async (id, text) => {
 
 export const saveBadgeImage = async (id, url) => {
     try {
-        const res = await fetch(`/api/badges/${id}/images`, {
+        const res = await fetch(`${API_URL}/api/badges/${id}/images`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url })
@@ -57,7 +57,7 @@ export const saveBadgeImage = async (id, url) => {
 
 export const deleteBadgeImage = async (id, url) => {
     try {
-        const res = await fetch(`/api/badges/${id}/images`, {
+        const res = await fetch(`${API_URL}/api/badges/${id}/images?url=${encodeURIComponent(url)}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url })
@@ -121,6 +121,45 @@ export const saveBadgeTypes = async (id, types, amount) => {
         return await res.json();
     } catch (error) {
         console.error("Failed to save types", error);
+        throw error;
+    }
+};
+// --- Badge Types Management ---
+
+export const fetchBadgeTypes = async () => {
+    try {
+        const res = await fetch(`${API_URL}/api/types`);
+        return await res.json();
+    } catch (error) {
+        console.error("Failed to fetch badge types", error);
+        return {};
+    }
+};
+
+export const saveBadgeType = async (key, label, color, description) => {
+    try {
+        const res = await fetch(`${API_URL}/api/admin/types`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key, label, color, description })
+        });
+        return await res.json();
+    } catch (error) {
+        console.error("Failed to save badge type", error);
+        throw error;
+    }
+};
+
+export const deleteBadgeType = async (key) => {
+    try {
+        const res = await fetch(`${API_URL}/api/admin/types`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key })
+        });
+        return await res.json();
+    } catch (error) {
+        console.error("Failed to delete badge type", error);
         throw error;
     }
 };

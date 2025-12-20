@@ -11,7 +11,20 @@ const AdminPage = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
 
+
+
     const [recalculating, setRecalculating] = useState(false);
+
+    useEffect(() => {
+        if (user && user.roles.includes('admin')) {
+            fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/list`)
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data)) setAdmins(data);
+                })
+                .catch(err => console.error("Failed to fetch admins", err));
+        }
+    }, [user]);
 
     const handleRecalculateStats = async () => {
         if (!confirm("Вы уверены, что хотите пересчитать статистику для всех пользователей? Это может занять некоторое время.")) return;
@@ -206,6 +219,202 @@ const AdminPage = () => {
                         <div style={{ padding: '20px', textAlign: 'center', color: '#555' }}>Нет назначенных администраторов.</div>
                     )}
                 </div>
+            </div>
+            <div className="admin-section" style={{ marginTop: '3rem' }}>
+                <h2>Управление типами значков</h2>
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                    <p style={{ marginBottom: '1rem', color: '#aaa' }}>
+                        Добавление новых категорий значков (типов) для классификации.
+                    </p>
+
+                    <BadgeTypesManager />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const BadgeTypesManager = () => {
+    const [types, setTypes] = useState({});
+    const [loading, setLoading] = useState(true);
+    const [formData, setFormData] = useState({ key: '', label: '', color: '#3498db' });
+    const [msg, setMsg] = useState({ type: '', text: '' });
+
+    useEffect(() => {
+        fetchTypes();
+    }, []);
+
+    const fetchTypes = async () => {
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/types`);
+            const data = await res.json();
+            setTypes(data);
+        } catch (e) {
+            console.error("Failed to load types");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAddType = async (e) => {
+        e.preventDefault();
+        setMsg({ type: '', text: '' });
+
+        if (!formData.key || !formData.label) {
+            setMsg({ type: 'error', text: 'ID и Название обязательны' });
+            return;
+        }
+
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/types`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            setTypes(data.types);
+            setMsg({ type: 'success', text: `Тип "${formData.label}" успешно добавлен` });
+            setFormData({ key: '', label: '', color: '#3498db', description: '' });
+        } catch (e) {
+            setMsg({ type: 'error', text: e.message || "Ошибка при добавлении" });
+        }
+    };
+
+    const handleDelete = async (key) => {
+        if (!confirm(`Удалить тип "${types[key].label}"?`)) return;
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/types`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setTypes(data.types);
+            }
+        } catch (e) {
+            alert("Ошибка удаления");
+        }
+    };
+
+    if (loading) return <div>Загрузка типов...</div>;
+
+    return (
+        <div>
+            {msg.text && (
+                <div style={{
+                    padding: '10px',
+                    borderRadius: '8px',
+                    marginBottom: '1rem',
+                    background: msg.type === 'error' ? 'rgba(231, 76, 60, 0.2)' : 'rgba(46, 204, 113, 0.2)',
+                    color: msg.type === 'error' ? '#e74c3c' : '#2ecc71'
+                }}>
+                    {msg.text}
+                </div>
+            )}
+
+            <form onSubmit={handleAddType} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.8rem', color: '#aaa' }}>ID (ключ, англ)</label>
+                    <input
+                        type="text"
+                        value={formData.key}
+                        onChange={e => setFormData({ ...formData, key: e.target.value })}
+                        placeholder="e.g. event-2025"
+                        style={{ padding: '8px', background: '#25252b', border: '1px solid #444', color: 'white', borderRadius: '4px' }}
+                    />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.8rem', color: '#aaa' }}>Название (отображаемое)</label>
+                    <input
+                        type="text"
+                        value={formData.label}
+                        onChange={e => setFormData({ ...formData, label: e.target.value })}
+                        placeholder="Например: Event 2025"
+                        style={{ padding: '8px', background: '#25252b', border: '1px solid #444', color: 'white', borderRadius: '4px' }}
+                    />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.8rem', color: '#aaa' }}>Цвет</label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <input
+                            type="color"
+                            value={formData.color}
+                            onChange={e => setFormData({ ...formData, color: e.target.value })}
+                            style={{ width: '40px', height: '40px', border: 'none', padding: 0, background: 'none', cursor: 'pointer' }}
+                        />
+                        <input
+                            type="text"
+                            value={formData.color}
+                            onChange={e => setFormData({ ...formData, color: e.target.value })}
+                            style={{ flex: 1, padding: '8px', background: '#25252b', border: '1px solid #444', color: 'white', borderRadius: '4px' }}
+                        />
+                    </div>
+                </div>
+                <button
+                    type="submit"
+                    style={{
+                        gridColumn: '1 / -1',
+                        padding: '10px',
+                        background: 'var(--color-accent)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        opacity: (!formData.key || !formData.label) ? 0.5 : 1
+                    }}
+                    disabled={!formData.key || !formData.label}
+                >
+                    Добавить новый тип
+                </button>
+            </form>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+                {Object.entries(types).map(([key, t]) => (
+                    <div key={key} style={{
+                        padding: '1rem',
+                        background: '#25252b',
+                        borderRadius: '8px',
+                        border: `1px solid ${t.color}`,
+                        position: 'relative'
+                    }}>
+                        <div style={{
+                            display: 'inline-block',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            background: t.bg || t.color,
+                            color: t.color,
+                            fontSize: '0.8rem',
+                            fontWeight: 'bold',
+                            border: `1px solid ${t.border || t.color}`,
+                            marginBottom: '0.5rem'
+                        }}>
+                            {t.label}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '0.5rem' }}>ID: {key}</div>
+                        {t.description && <div style={{ fontSize: '0.8rem', color: '#ccc' }}>{t.description}</div>}
+
+                        <button
+                            onClick={() => handleDelete(key)}
+                            style={{
+                                position: 'absolute',
+                                top: '5px',
+                                right: '5px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#e74c3c',
+                                cursor: 'pointer',
+                                fontSize: '1.2rem'
+                            }}
+                            title="Удалить"
+                        >
+                            &times;
+                        </button>
+                    </div>
+                ))}
             </div>
         </div>
     );
