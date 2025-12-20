@@ -277,7 +277,7 @@ const BadgeDetailPage = () => {
 
                 <div className="detail-info">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                             <h2 style={{ marginBottom: 0 }}>{badge.name}</h2>
                             {/* Render Types Badges */}
                             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
