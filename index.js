@@ -950,6 +950,69 @@ app.post('/api/admin/recalculate-stats', (req, res) => {
     res.json({ success: true, count: updatedCount });
 });
 
+// --- Dynamic Badge Types Endpoints ---
+
+// Get all defined badge types (Public)
+app.get('/api/types', (req, res) => {
+    const db = getDb();
+    const types = db.type_definitions || {};
+    res.json(types);
+});
+
+// Add or Update a badge type (Admin only)
+app.post('/api/admin/types', (req, res) => {
+    if (!req.session.user || !req.session.user.roles.includes('admin')) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const { key, label, color, description } = req.body;
+    if (!key || !label || !color) {
+        return res.status(400).json({ error: 'Missing required fields: key, label, color' });
+    }
+
+    const db = getDb();
+    if (!db.type_definitions) db.type_definitions = {};
+
+    // Hex to RGB helper
+    const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    const rgb = hexToRgb(color);
+    const bg = rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)` : color;
+    const border = rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)` : color;
+
+    db.type_definitions[key] = {
+        label,
+        color,
+        bg,
+        border,
+        description: description || ''
+    };
+    saveDb(db);
+    res.json({ success: true, types: db.type_definitions });
+});
+
+// Delete a badge type (Admin only)
+app.delete('/api/admin/types', (req, res) => {
+    if (!req.session.user || !req.session.user.roles.includes('admin')) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const { key } = req.body;
+    if (!key) return res.status(400).json({ error: 'Missing key' });
+
+    const db = getDb();
+    if (db.type_definitions && db.type_definitions[key]) {
+        delete db.type_definitions[key];
+        saveDb(db);
+    }
+    res.json({ success: true, types: db.type_definitions });
+});
+
 // ============================================
 // SSR Metadata for Social Media Crawlers
 // ============================================
@@ -1116,68 +1179,7 @@ app.get('/user/:username', async (req, res, next) => {
     }
 });
 
-// --- Dynamic Badge Types Endpoints ---
 
-// Get all defined badge types (Public)
-app.get('/api/types', (req, res) => {
-    const db = getDb();
-    const types = db.type_definitions || {};
-    res.json(types);
-});
-
-// Add or Update a badge type (Admin only)
-app.post('/api/admin/types', (req, res) => {
-    if (!req.session.user || !req.session.user.roles.includes('admin')) {
-        return res.status(403).json({ error: 'Unauthorized' });
-    }
-    const { key, label, color, description } = req.body;
-    if (!key || !label || !color) {
-        return res.status(400).json({ error: 'Missing required fields: key, label, color' });
-    }
-
-    const db = getDb();
-    if (!db.type_definitions) db.type_definitions = {};
-
-    // Hex to RGB helper
-    const hexToRgb = (hex) => {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16)
-        } : null;
-    }
-
-    const rgb = hexToRgb(color);
-    const bg = rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)` : color;
-    const border = rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)` : color;
-
-    db.type_definitions[key] = {
-        label,
-        color,
-        bg,
-        border,
-        description: description || ''
-    };
-    saveDb(db);
-    res.json({ success: true, types: db.type_definitions });
-});
-
-// Delete a badge type (Admin only)
-app.delete('/api/admin/types', (req, res) => {
-    if (!req.session.user || !req.session.user.roles.includes('admin')) {
-        return res.status(403).json({ error: 'Unauthorized' });
-    }
-    const { key } = req.body;
-    if (!key) return res.status(400).json({ error: 'Missing key' });
-
-    const db = getDb();
-    if (db.type_definitions && db.type_definitions[key]) {
-        delete db.type_definitions[key];
-        saveDb(db);
-    }
-    res.json({ success: true, types: db.type_definitions });
-});
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
