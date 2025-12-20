@@ -191,14 +191,14 @@ const Header = () => {
                                 className="user-name"
                                 style={{
                                     textDecoration: 'none',
-                                    color: 'var(--color-text-primary)',
+                                    color: user.color || 'var(--color-text-primary)',
                                     fontWeight: '600',
                                     transition: 'color 0.2s ease'
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-accent)'}
-                                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-primary)'}
+                                onMouseLeave={(e) => e.currentTarget.style.color = user.color || 'var(--color-text-primary)'}
                             >
-                                {user.name}
+                                {user.display_name || user.name}
                             </Link>
                             <button onClick={logout} className="icon-btn" title="Выйти">
                                 <LogOut size={20} />

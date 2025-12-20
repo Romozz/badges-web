@@ -74,6 +74,23 @@ app.get('/auth/callback', async (req, res) => {
         });
 
         const twitchUser = userRes.data.data[0];
+
+        // Fetch user chat color
+        let userColor = null;
+        try {
+            const colorRes = await axios.get(`https://api.twitch.tv/helix/chat/color?user_id=${twitchUser.id}`, {
+                headers: {
+                    'Client-ID': CLIENT_ID,
+                    'Authorization': `Bearer ${access_token}`
+                }
+            });
+            if (colorRes.data.data && colorRes.data.data.length > 0) {
+                userColor = colorRes.data.data[0].color || null;
+            }
+        } catch (colorError) {
+            console.error('Error fetching user color:', colorError.message);
+        }
+
         const db = getDb();
 
         const isCreator = twitchUser.login === 'rom0zzz';
@@ -88,6 +105,7 @@ app.get('/auth/callback', async (req, res) => {
             name: twitchUser.login,
             display_name: twitchUser.display_name,
             profile_image_url: twitchUser.profile_image_url,
+            color: userColor,
             roles: roles
         };
 
@@ -530,8 +548,11 @@ app.post('/api/me/badges/save', async (req, res) => {
         const userData = getUserBadgesData();
         userData[userId] = {
             login,
+            display_name: req.session.user.display_name || login,
             badges,
             lastUpdated: new Date().toISOString(),
+            isRegistered: true,
+            color: req.session.user.color || null,
             stats: {
                 total: badges.length,
                 free: freeCount,
@@ -569,8 +590,11 @@ app.get('/api/stats/leaderboard', async (req, res) => {
                 const rareCount = user.badges.filter(b => rareBadges.includes(b)).length;
                 return {
                     login: user.login,
+                    display_name: user.display_name || user.login,
                     count: rareCount,
-                    total: user.stats.total
+                    total: user.stats.total,
+                    isRegistered: user.isRegistered !== undefined ? user.isRegistered : true,
+                    color: user.color || null
                 };
             });
         } else {
@@ -578,8 +602,11 @@ app.get('/api/stats/leaderboard', async (req, res) => {
             const statKey = type === 'total' ? 'total' : type;
             leaderboard = Object.values(userData).map(user => ({
                 login: user.login,
+                display_name: user.display_name || user.login,
                 count: user.stats[statKey] || 0,
-                total: user.stats.total
+                total: user.stats.total,
+                isRegistered: user.isRegistered !== undefined ? user.isRegistered : true,
+                color: user.color || null
             }));
         }
 
@@ -692,6 +719,7 @@ app.get('/api/users/:username', async (req, res) => {
                 }
 
                 const badges = data.channelViewer.earnedBadges.map(b => b.title);
+                const displayName = data.channelViewer.user?.displayName || login;
 
                 // Calculate stats
                 const allBadges = badgesCache || [];
@@ -712,8 +740,10 @@ app.get('/api/users/:username', async (req, res) => {
                 const newUserData = getUserBadgesData();
                 newUserData[userId] = {
                     login,
+                    display_name: displayName,
                     badges,
                     lastUpdated: new Date().toISOString(),
+                    isRegistered: false,
                     stats: {
                         total: badges.length,
                         free: freeCount,
@@ -732,9 +762,12 @@ app.get('/api/users/:username', async (req, res) => {
 
         res.json({
             login: userEntry.login,
+            display_name: userEntry.display_name || userEntry.login,
             badges: userEntry.badges,
             stats: userEntry.stats,
-            lastUpdated: userEntry.lastUpdated
+            lastUpdated: userEntry.lastUpdated,
+            isRegistered: userEntry.isRegistered !== undefined ? userEntry.isRegistered : true,
+            color: userEntry.color || null
         });
     } catch (error) {
         console.error("Error fetching user profile:", error.message);
@@ -1180,6 +1213,27 @@ app.get('/user/:username', async (req, res, next) => {
 });
 
 
+
+// Get recent users (Admin only)
+app.get('/api/admin/users', (req, res) => {
+    if (!req.session.user || !req.session.user.roles.includes('admin')) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const userData = getUserBadgesData();
+    const users = Object.values(userData).map(user => ({
+        ...user,
+        isRegistered: user.isRegistered !== undefined ? user.isRegistered : true
+    }));
+
+    // Sort by lastUpdated desc
+    users.sort((a, b) => {
+        const dateA = a.lastUpdated ? new Date(a.lastUpdated).getTime() : 0;
+        const dateB = b.lastUpdated ? new Date(b.lastUpdated).getTime() : 0;
+        return dateB - dateA;
+    });
+
+    res.json(users);
+});
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);

@@ -220,6 +220,17 @@ const AdminPage = () => {
                     )}
                 </div>
             </div>
+
+            <div className="admin-section" style={{ marginTop: '3rem' }}>
+                <h2>Последние пользователи</h2>
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                    <p style={{ marginBottom: '1rem', color: '#aaa' }}>
+                        Список пользователей, недавно обновивших свою коллекцию.
+                    </p>
+                    <RecentUsersList />
+                </div>
+            </div>
+
             <div className="admin-section" style={{ marginTop: '3rem' }}>
                 <h2>Управление типами значков</h2>
                 <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
@@ -416,6 +427,62 @@ const BadgeTypesManager = () => {
                     </div>
                 ))}
             </div>
+        </div>
+    );
+};
+
+const RecentUsersList = () => {
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/users`)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setUsers(data);
+            })
+            .catch(e => console.error("Failed to load users", e))
+            .finally(() => setLoading(false));
+    }, []);
+
+    if (loading) return <div>Загрузка пользователей...</div>;
+
+    return (
+        <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <thead>
+                    <tr style={{ background: '#25252b', textAlign: 'left' }}>
+                        <th style={{ padding: '10px', borderRadius: '8px 0 0 0' }}>Пользователь</th>
+                        <th style={{ padding: '10px' }}>Обновлен</th>
+                        <th style={{ padding: '10px' }}>Значков</th>
+                        <th style={{ padding: '10px', borderRadius: '0 8px 0 0' }}>Stats (T/F/P)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {users.map(u => (
+                        <tr key={u.login} style={{ borderBottom: '1px solid #333' }}>
+                            <td style={{ padding: '10px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{
+                                        fontWeight: 'bold',
+                                        color: u.color || (u.isRegistered ? 'var(--color-accent)' : '#aaa')
+                                    }}>{u.display_name || u.login}</span>
+                                </div>
+                            </td>
+                            <td style={{ padding: '10px', color: '#aaa' }}>
+                                {u.lastUpdated ? new Date(u.lastUpdated).toLocaleString() : '-'}
+                            </td>
+                            <td style={{ padding: '10px' }}>{u.stats?.total || 0}</td>
+                            <td style={{ padding: '10px', fontFamily: 'monospace' }}>
+                                {u.stats?.total}/{u.stats?.free}/{u.stats?.paid}
+                            </td>
+                        </tr>
+                    ))}
+                    {users.length === 0 && (
+                        <tr><td colSpan="4" style={{ padding: '20px', textAlign: 'center', color: '#555' }}>Нет данных</td></tr>
+                    )}
+                </tbody>
+            </table>
         </div>
     );
 };

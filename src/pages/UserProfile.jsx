@@ -105,7 +105,20 @@ const UserProfile = () => {
                     <ArrowLeft size={20} />
                     Назад к статистике
                 </Link>
-                <h2>Профиль {userData.login}</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <h2 style={{ margin: 0, color: userData.color || '#fff' }}>Профиль {userData.display_name || userData.login}</h2>
+                    <span style={{
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '6px',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        background: userData.isRegistered !== false ? 'rgba(145, 70, 255, 0.2)' : 'rgba(128, 128, 128, 0.2)',
+                        color: userData.isRegistered !== false ? 'var(--color-accent)' : '#aaa',
+                        border: `1px solid ${userData.isRegistered !== false ? 'rgba(145, 70, 255, 0.4)' : 'rgba(128, 128, 128, 0.4)'}`
+                    }}>
+                        {userData.isRegistered !== false ? 'Зарегистрирован' : 'Не зарегистрирован'}
+                    </span>
+                </div>
                 <p>Коллекция значков Twitch</p>
             </div>
 

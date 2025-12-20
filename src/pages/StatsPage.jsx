@@ -203,14 +203,14 @@ const StatsPage = () => {
                                             style={{
                                                 fontSize: '1.1rem',
                                                 fontWeight: '600',
-                                                color: '#fff',
+                                                color: entry.color || (entry.isRegistered ? '#fff' : 'rgba(255, 255, 255, 0.5)'),
                                                 textDecoration: 'none',
                                                 transition: 'color 0.2s ease'
                                             }}
                                             onMouseEnter={(e) => e.currentTarget.style.color = currentTab.color}
-                                            onMouseLeave={(e) => e.currentTarget.style.color = '#fff'}
+                                            onMouseLeave={(e) => e.currentTarget.style.color = entry.color || (entry.isRegistered ? '#fff' : 'rgba(255, 255, 255, 0.5)')}
                                         >
-                                            {entry.login}
+                                            {entry.display_name || entry.login}
                                         </Link>
                                         <div style={{
                                             fontSize: '0.85rem',
@@ -307,9 +307,9 @@ const StatsPage = () => {
                                         <div style={{
                                             fontSize: '1.1rem',
                                             fontWeight: '600',
-                                            color: '#fff'
+                                            color: userEntry.color || '#fff'
                                         }}>
-                                            {userEntry.login}
+                                            {userEntry.display_name || userEntry.login}
                                         </div>
                                         <div style={{
                                             fontSize: '0.85rem',
