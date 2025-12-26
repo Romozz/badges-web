@@ -124,10 +124,38 @@ router.get('/2025', (req, res) => {
 
     let totalSpent = 0;
     const costAmounts = db.cost_amounts || {};
+    const prices = db.prices || {};
+
+    // Approximate rates for conversion from USD
+    const EXCHANGE_RATES = {
+        'RUB': 100,
+        'EUR': 0.95,
+        'GBP': 0.80,
+        'USD': 1
+    };
 
     badges2025.forEach(b => {
         const types = typesMap[b.badge] || typesMap[b.base_id] || [];
         const cost = (db.costs && (db.costs[b.badge] || db.costs[b.base_id])) || null;
+
+        const priceUSD = prices[b.badge] || prices[b.base_id];
+
+        if (priceUSD) {
+            // If explicit USD price is set, use it with conversion
+            const rate = EXCHANGE_RATES[countryPricing.currency] || 100; // Default to ~100 (RUB-like) if unknown
+            const userCurrencyPrice = priceUSD * rate;
+            // Check if it's "paid" type to also add sub cost? 
+            // Assumption: If explicit price is set, it Overrides or Adds to sub cost?
+            // User said: "additional price... this set price will be taken into account".
+            // Likely it implies the TOTAL cost. Or "Extra"?
+            // "put price additionally... this set price will be taken into account".
+            // If I have a sub badge (paid) AND a price $10.
+            // Is it Sub + $10? Or just $10?
+            // "add possibility to set extra price... this set price will be accounted".
+            // I will ADD it.
+            totalSpent += userCurrencyPrice;
+        }
+
         if (types.includes('paid') || cost === 'paid') {
             const amount = costAmounts[b.badge] || costAmounts[b.base_id] || 1;
             totalSpent += amount * countryPricing.price;

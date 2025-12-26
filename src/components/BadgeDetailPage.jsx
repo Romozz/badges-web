@@ -17,6 +17,7 @@ const BadgeDetailPage = () => {
     const [availability, setAvailability] = useState({ start: null, end: null });
     const [types, setTypes] = useState([]);
     const [costAmount, setCostAmount] = useState('');
+    const [price, setPrice] = useState(''); // New State
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState('');
     const [newImageUrl, setNewImageUrl] = useState('');
@@ -41,6 +42,7 @@ const BadgeDetailPage = () => {
                         setAvailability(data.availability || { start: null, end: null });
                         setTypes(data.types || []);
                         setCostAmount(data.costAmount || '');
+                        setPrice(data.price || ''); // Fetch Price
                         setWatchTime(data.watchTime || '');
                         setSiteStats(data.site_stats || null);
                     })
@@ -110,7 +112,7 @@ const BadgeDetailPage = () => {
                 newTypes = [...types, type];
             }
 
-            await saveBadgeTypes(badgeId, newTypes, newTypes.includes('paid') ? costAmount : undefined, newTypes.includes('free') ? watchTime : undefined);
+            await saveBadgeTypes(badgeId, newTypes, newTypes.includes('paid') ? costAmount : undefined, newTypes.includes('free') ? watchTime : undefined, price);
             setTypes(newTypes);
         } catch (e) {
             alert("Failed to update types.");
@@ -123,7 +125,13 @@ const BadgeDetailPage = () => {
 
     const saveAmount = async () => {
         try {
-            await saveBadgeTypes(badgeId, types, costAmount, watchTime);
+            await saveBadgeTypes(badgeId, types, costAmount, watchTime, price);
+        } catch (e) { console.error(e); }
+    }
+
+    const savePrice = async () => {
+        try {
+            await saveBadgeTypes(badgeId, types, costAmount, watchTime, price);
         } catch (e) { console.error(e); }
     }
 
@@ -131,9 +139,10 @@ const BadgeDetailPage = () => {
         setWatchTime(e.target.value);
     };
 
+
     const saveWatchTime = async () => {
         try {
-            await saveBadgeTypes(badgeId, types, costAmount, watchTime);
+            await saveBadgeTypes(badgeId, types, costAmount, watchTime, price);
         } catch (e) { console.error(e); }
     }
 
@@ -322,7 +331,7 @@ const BadgeDetailPage = () => {
                                         }}>
                                             {conf.label}
                                             {type === 'paid' && costAmount && (
-                                                <span style={{ opacity: 0.8, fontSize: '0.7rem' }}>({costAmount})</span>
+                                                <span style={{ opacity: 0.8, fontSize: '0.7rem' }}>({costAmount}{price ? ` | $${price}` : ''})</span>
                                             )}
                                             {type === 'free' && watchTime && (
                                                 <span style={{ opacity: 0.8, fontSize: '0.7rem' }}>({formatWatchDuration(watchTime)})</span>
@@ -432,25 +441,46 @@ const BadgeDetailPage = () => {
                                             <span style={{ color: types.includes(key) ? config.color : 'var(--color-text-secondary)', fontWeight: '600' }}>{config.label}</span>
 
                                             {key === 'paid' && types.includes('paid') && (
-                                                <input
-                                                    type="number"
-                                                    placeholder="#"
-                                                    value={costAmount || ''}
-                                                    onChange={(e) => setCostAmount(e.target.value)}
-                                                    onBlur={saveAmount}
-                                                    style={{
-                                                        width: '50px',
-                                                        padding: '0.3rem',
-                                                        borderRadius: '4px',
-                                                        border: '1px solid rgba(231, 76, 60, 0.5)',
-                                                        background: 'rgba(0,0,0,0.3)',
-                                                        color: '#fff',
-                                                        fontWeight: '600',
-                                                        textAlign: 'center'
-                                                    }}
-                                                    title="Number of subs"
-                                                    onClick={(e) => e.stopPropagation()} // Prevent toggling when clicking input
-                                                />
+                                                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="#"
+                                                        value={costAmount || ''}
+                                                        onChange={(e) => setCostAmount(e.target.value)}
+                                                        onBlur={saveAmount}
+                                                        style={{
+                                                            width: '50px',
+                                                            padding: '0.3rem',
+                                                            borderRadius: '4px',
+                                                            border: '1px solid rgba(231, 76, 60, 0.5)',
+                                                            background: 'rgba(0,0,0,0.3)',
+                                                            color: '#fff',
+                                                            fontWeight: '600',
+                                                            textAlign: 'center'
+                                                        }}
+                                                        title="Number of subs"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        placeholder="$"
+                                                        value={price || ''}
+                                                        onChange={(e) => setPrice(e.target.value)}
+                                                        onBlur={savePrice}
+                                                        style={{
+                                                            width: '50px',
+                                                            padding: '0.3rem',
+                                                            borderRadius: '4px',
+                                                            border: '1px solid rgba(46, 204, 113, 0.5)',
+                                                            background: 'rgba(0,0,0,0.3)',
+                                                            color: '#fff',
+                                                            fontWeight: '600',
+                                                            textAlign: 'center'
+                                                        }}
+                                                        title="Price in USD"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                </div>
                                             )}
                                             {key === 'free' && types.includes('free') && (
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

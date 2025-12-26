@@ -271,7 +271,8 @@
     ],
     "hunt-crosses": [
       "game",
-      "free"
+      "free",
+      "paid"
     ],
     "frog-lantern": [
       "game",
@@ -349,5 +350,8 @@
   },
   "watch_times": {
     "tft-paris-open": 90
+  },
+  "prices": {
+    "hunt-crosses": 10
   }
 }

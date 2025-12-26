@@ -89,12 +89,14 @@ router.get('/', async (req, res) => {
     const addedDates = db.added_dates || {};
     const availability = db.availability || {};
     const typesMap = db.types || {};
+    const prices = db.prices || {};
 
     badges = badges.map(b => {
         const avail = availability[b.badge] || availability[b.base_id];
         const cost = costs[b.badge] || costs[b.base_id];
         const costAmount = costAmounts[b.badge] || costAmounts[b.base_id];
         const addedAt = addedDates[b.badge] || addedDates[b.base_id];
+        const price = prices[b.badge] || prices[b.base_id];
 
         let types = typesMap[b.badge] || typesMap[b.base_id];
         if (!types && cost) {
@@ -118,6 +120,7 @@ router.get('/', async (req, res) => {
             isRelevant,
             types: types,
             costAmount: costAmount || null,
+            price: price || null,
             watchTime: db.watch_times[b.badge] || db.watch_times[b.base_id] || null,
             added_at: addedAt || null,
             availability: avail || null
@@ -147,6 +150,7 @@ router.get('/:id', (req, res) => {
     const images = db.images[id] || db.images[baseId] || [];
     const cost = (db.costs && (db.costs[id] || db.costs[baseId])) || null;
     const costAmount = (db.cost_amounts && (db.cost_amounts[id] || db.cost_amounts[baseId])) || null;
+    const price = (db.prices && (db.prices[id] || db.prices[baseId])) || null;
     const avail = (db.availability && (db.availability[id] || db.availability[baseId])) || null;
     const watchTime = (db.watch_times && (db.watch_times[id] || db.watch_times[baseId])) || null;
     const types = (db.types && (db.types[id] || db.types[baseId])) || (cost ? [cost] : []);
@@ -186,6 +190,7 @@ router.get('/:id', (req, res) => {
         isRelevant,
         cost,
         costAmount,
+        price,
         watchTime,
         availability: avail,
         types,
@@ -259,7 +264,7 @@ router.post('/:id/cost', isAdmin, (req, res) => {
 });
 
 router.post('/:id/types', isAdmin, (req, res) => {
-    const { types, amount, watchTime } = req.body;
+    const { types, amount, watchTime, price } = req.body;
     const db = getDb();
     if (types && Array.isArray(types)) {
         db.types = db.types || {};
@@ -277,8 +282,13 @@ router.post('/:id/types', isAdmin, (req, res) => {
         if (watchTime && parseInt(watchTime) > 0) db.watch_times[req.params.id] = parseInt(watchTime);
         else delete db.watch_times[req.params.id];
     }
+    if (price !== undefined) {
+        db.prices = db.prices || {};
+        if (price && parseFloat(price) > 0) db.prices[req.params.id] = parseFloat(price);
+        else delete db.prices[req.params.id];
+    }
     saveDb(db);
-    res.json({ success: true, types, amount, watchTime });
+    res.json({ success: true, types, amount, watchTime, price });
 });
 
 module.exports = router;
