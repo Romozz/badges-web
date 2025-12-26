@@ -108,13 +108,13 @@ router.get('/2025', (req, res) => {
     // Default to RU if geo lookup fails or if IP is private/local
     let countryCode = geo ? geo.country : 'RU';
 
-    // Explicitly force RU for private networks and empty IPs
-    // Docker often uses 172.x, Local 192.168.x/10.x, Localhost 127.x
-    if (!ip || ip === '::1' || ip.includes('127.') || ip.includes('192.168.') || ip.includes('10.') || ip.startsWith('172.')) {
+    // Explicitly force RU for private networks, empty IPs, OR if browser language is Russian
+    const acceptLanguage = req.headers['accept-language'] || req.ip || '';
+    if (!ip || ip === '::1' || ip.includes('127.') || ip.includes('192.168.') || ip.includes('10.') || ip.startsWith('172.') || acceptLanguage.toLowerCase().includes('ru')) {
         countryCode = 'RU';
     }
 
-    console.log(`Detected IP: "${ip}", Geo: ${JSON.stringify(geo)}, Final Country: ${countryCode}`);
+    console.log(`Detected IP: "${ip}", Language: "${acceptLanguage}", Geo: ${JSON.stringify(geo)}, Final Country: ${countryCode}`);
 
     let countryPricing = pricing[countryCode];
     // Fallback to RU pricing if specific country not found in pricing.json
