@@ -24,6 +24,7 @@ const RecapPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState(null);
     const shareCardRef = React.useRef(null);
 
     const handleShare = async () => {
@@ -36,19 +37,39 @@ const RecapPage = () => {
                     useCORS: true // Attempt to handle cross-origin images
                 });
 
-                const link = document.createElement('a');
-                link.download = `badges-recap-2025-${new Date().getTime()}.png`;
-                link.href = canvas.toDataURL('image/png');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        alert("Не удалось создать изображение.");
+                        setIsGenerating(false);
+                        return;
+                    }
+
+                    const url = URL.createObjectURL(blob);
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                    if (isMobile) {
+                        setPreviewUrl(url);
+                    } else {
+                        const link = document.createElement('a');
+                        link.download = `badges-recap-2025-${new Date().getTime()}.png`;
+                        link.href = url;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                    }
+                    setIsGenerating(false);
+                }, 'image/png');
             }
         } catch (err) {
             console.error("Failed to generate image", err);
             alert("Не удалось создать изображение. Попробуйте скриншот.");
-        } finally {
             setIsGenerating(false);
         }
+    };
+
+    const handleClosePreview = () => {
+        setPreviewUrl(null);
     };
 
     useEffect(() => {
@@ -273,7 +294,7 @@ const RecapPage = () => {
                     </h1>
 
                     <p style={{ color: '#d1d5db', fontSize: '16px', maxWidth: '800px', margin: '0 auto 24px', lineHeight: '1.6', fontWeight: '500' }}>
-                        Год, когда твоя коллекция превратилась в легенду. Твои действия на платформе Twitch в 2025 году создали уникальный цифровой отпечаток. От редких ивентов до эпических дропов в прямом эфире — вспомни каждое мгновение своего пути и узнай, какое место ты занимаешь среди миллионов других коллекционеров.
+                        Год, когда твоя коллекция превратилась в легенду. Твои действия на Twitch в 2025 году оставили уникальный след. Вспомни каждое мгновение своего пути и узнай, какое место ты занимаешь среди миллионов других коллекционеров.
                     </p>
 
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '40px' }}>
@@ -778,7 +799,7 @@ const RecapPage = () => {
                             { icon: <Zap size={20} color="#a78bfa" />, label: 'Клипы', val: data.stats.categories.clip, desc: 'За яркие моменты' },
                             { icon: <Trophy size={20} color="#f59e0b" />, label: 'Игры', val: data.stats.categories.game, desc: 'За киберспорт и новинки' },
                             { icon: <Compass size={20} color="#3b82f6" />, label: 'События', val: data.stats.categories.event, desc: 'За участие в движе' },
-                            { icon: <Heart size={20} color="#ec4899" />, label: 'Charity', val: data.stats.categories.charity, desc: 'За добрые дела' }
+                            { icon: <Heart size={20} color="#ec4899" />, label: 'Благотворительность', val: data.stats.categories.charity, desc: 'За добрые дела' }
                         ].map((cat, i) => (
                             <div key={i} style={{ padding: '24px', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                 <div style={{ marginBottom: '16px' }}>{cat.icon}</div>
@@ -841,7 +862,7 @@ const RecapPage = () => {
                         <div>
                             <div style={{ fontSize: '12px', color: '#9ca3af', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Рекордная серия</div>
                             <div style={{ fontSize: '32px', fontWeight: '900', color: 'white' }}>{data.visuals.maxStreak} недель</div>
-                            <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '8px', lineHeight: '1.4' }}>Твое постоянство впечатляет! Столько недель подряд ты был в центре событий и не пропустил ни одного важного дропа.</p>
+                            <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '8px', lineHeight: '1.4' }}>Твое постоянство впечатляет! Столько недель подряд ты был в центре событий и не пропустил ни одного важного значка.</p>
                         </div>
                     </div>
                     <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '32px', padding: '32px', boxShadow: '0 4px 25px rgba(0,0,0,0.2)' }}>
@@ -957,7 +978,7 @@ const RecapPage = () => {
                         {data.stats.prediction}
                     </div>
                     <p style={{ color: '#9ca3af', fontSize: '17px', maxWidth: '700px', margin: '0 auto', lineHeight: '1.6' }}>
-                        Твой путь в 2025 году подготовил отличную почву для новых свершений. Основываясь на твоей активности, мы предвидим именно такую роль для тебя в следующем году. Приготовься к новым эпическим дропам!
+                        Твой путь в 2025 году подготовил отличную почву для новых свершений. Основываясь на твоей активности, мы предвидим именно такую роль для тебя в следующем году. Приготовься к новым значкам!
                     </p>
                 </div>
             </div>
@@ -978,6 +999,35 @@ const RecapPage = () => {
             </div>
 
 
+            {/* Mobile Image Preview Modal */}
+            {previewUrl && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.9)', zIndex: 1000,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    padding: '20px'
+                }} onClick={handleClosePreview}>
+                    <div style={{
+                        background: '#1f2937', padding: '20px', borderRadius: '20px',
+                        maxWidth: '100%', maxHeight: '90%', overflow: 'auto',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px'
+                    }} onClick={e => e.stopPropagation()}>
+                        <div style={{ color: 'white', fontSize: '16px', fontWeight: 'bold', textAlign: 'center' }}>
+                            Зажмите изображение, чтобы сохранить
+                        </div>
+                        <img src={previewUrl} alt="Recap 2025" style={{ maxWidth: '100%', borderRadius: '12px', border: '1px solid #374151' }} />
+                        <button
+                            onClick={handleClosePreview}
+                            style={{
+                                padding: '12px 24px', background: 'white', color: 'black',
+                                border: 'none', borderRadius: '12px', fontWeight: 'bold', width: '100%'
+                            }}
+                        >
+                            Закрыть
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
