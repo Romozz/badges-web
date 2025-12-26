@@ -1,0 +1,86 @@
+{
+    "US": {
+        "price": 5.99,
+        "currency": "USD"
+    },
+    "CA": {
+        "price": 7.99,
+        "currency": "CAD"
+    },
+    "GB": {
+        "price": 4.99,
+        "currency": "GBP"
+    },
+    "AU": {
+        "price": 8.99,
+        "currency": "AUD"
+    },
+    "TR": {
+        "price": 43.90,
+        "currency": "TRY"
+    },
+    "DE": {
+        "price": 4.99,
+        "currency": "EUR"
+    },
+    "FR": {
+        "price": 4.99,
+        "currency": "EUR"
+    },
+    "IE": {
+        "price": 4.99,
+        "currency": "EUR"
+    },
+    "ES": {
+        "price": 4.99,
+        "currency": "EUR"
+    },
+    "IT": {
+        "price": 4.99,
+        "currency": "EUR"
+    },
+    "BR": {
+        "price": 9.90,
+        "currency": "BRL"
+    },
+    "MX": {
+        "price": 60.00,
+        "currency": "MXN"
+    },
+    "RU": {
+        "price": 130.00,
+        "currency": "RUB"
+    },
+    "UA": {
+        "price": 35.99,
+        "currency": "UAH"
+    },
+    "JP": {
+        "price": 700.00,
+        "currency": "JPY"
+    },
+    "KR": {
+        "price": 5000.00,
+        "currency": "KRW"
+    },
+    "IN": {
+        "price": 110.00,
+        "currency": "INR"
+    },
+    "PH": {
+        "price": 100.00,
+        "currency": "PHP"
+    },
+    "MY": {
+        "price": 7.99,
+        "currency": "MYR"
+    },
+    "TW": {
+        "price": 77.00,
+        "currency": "TWD"
+    },
+    "DEFAULT": {
+        "price": 4.99,
+        "currency": "USD"
+    }
+}

@@ -23,6 +23,7 @@ const BadgeDetailPage = () => {
     const [isChatLightMode, setIsChatLightMode] = useState(false);
     const [typeConfig, setTypeConfig] = useState({});
     const [siteStats, setSiteStats] = useState(null);
+    const [watchTime, setWatchTime] = useState('');
 
     useEffect(() => {
         fetchBadgeTypes().then(setTypeConfig);
@@ -40,6 +41,7 @@ const BadgeDetailPage = () => {
                         setAvailability(data.availability || { start: null, end: null });
                         setTypes(data.types || []);
                         setCostAmount(data.costAmount || '');
+                        setWatchTime(data.watchTime || '');
                         setSiteStats(data.site_stats || null);
                     })
                     .catch(err => console.error(err));
@@ -108,7 +110,7 @@ const BadgeDetailPage = () => {
                 newTypes = [...types, type];
             }
 
-            await saveBadgeTypes(badgeId, newTypes, newTypes.includes('paid') ? costAmount : undefined);
+            await saveBadgeTypes(badgeId, newTypes, newTypes.includes('paid') ? costAmount : undefined, newTypes.includes('free') ? watchTime : undefined);
             setTypes(newTypes);
         } catch (e) {
             alert("Failed to update types.");
@@ -121,9 +123,30 @@ const BadgeDetailPage = () => {
 
     const saveAmount = async () => {
         try {
-            await saveBadgeTypes(badgeId, types, costAmount);
+            await saveBadgeTypes(badgeId, types, costAmount, watchTime);
         } catch (e) { console.error(e); }
     }
+
+    const handleWatchTimeChange = (e) => {
+        setWatchTime(e.target.value);
+    };
+
+    const saveWatchTime = async () => {
+        try {
+            await saveBadgeTypes(badgeId, types, costAmount, watchTime);
+        } catch (e) { console.error(e); }
+    }
+
+    // Format Watch Time Helper
+    const formatWatchDuration = (minutes) => {
+        if (!minutes) return null;
+        const mins = parseInt(minutes);
+        if (mins < 60) return `${mins} мин`;
+        const hours = Math.floor(mins / 60);
+        const remainingMins = mins % 60;
+        if (remainingMins === 0) return `${hours} ч`;
+        return `${hours} ч ${remainingMins} мин`;
+    };
 
     const handleAddImage = async () => {
         if (!newImageUrl) return;
@@ -301,6 +324,9 @@ const BadgeDetailPage = () => {
                                             {type === 'paid' && costAmount && (
                                                 <span style={{ opacity: 0.8, fontSize: '0.7rem' }}>({costAmount})</span>
                                             )}
+                                            {type === 'free' && watchTime && (
+                                                <span style={{ opacity: 0.8, fontSize: '0.7rem' }}>({formatWatchDuration(watchTime)})</span>
+                                            )}
                                         </span>
                                     );
                                 })}
@@ -426,6 +452,30 @@ const BadgeDetailPage = () => {
                                                     onClick={(e) => e.stopPropagation()} // Prevent toggling when clicking input
                                                 />
                                             )}
+                                            {key === 'free' && types.includes('free') && (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="min"
+                                                        value={watchTime || ''}
+                                                        onChange={handleWatchTimeChange}
+                                                        onBlur={saveWatchTime}
+                                                        style={{
+                                                            width: '60px',
+                                                            padding: '0.3rem',
+                                                            borderRadius: '4px',
+                                                            border: '1px solid rgba(46, 204, 113, 0.5)',
+                                                            background: 'rgba(0,0,0,0.3)',
+                                                            color: '#fff',
+                                                            fontWeight: '600',
+                                                            textAlign: 'center'
+                                                        }}
+                                                        title="Watch time in minutes"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                    <span style={{ fontSize: '0.65rem' }}>мин</span>
+                                                </div>
+                                            )}
                                         </label>
                                     ))}
                                 </div>
@@ -503,10 +553,11 @@ const BadgeDetailPage = () => {
                     </div>
 
                     {/* Modern Stats Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginTop: '1rem', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem', marginBottom: '1.5rem' }}>
 
                         {/* User Count Card */}
                         <div style={{
+                            flex: '1 1 140px',
                             background: 'rgba(255, 255, 255, 0.03)',
                             border: '1px solid rgba(255, 255, 255, 0.05)',
                             borderRadius: '12px',
@@ -532,9 +583,35 @@ const BadgeDetailPage = () => {
                             </div>
                         </div>
 
+                        {/* Watch Time Card */}
+                        {watchTime && (
+                            <div style={{
+                                flex: '1 1 140px',
+                                background: 'rgba(255, 255, 255, 0.03)',
+                                border: '1px solid rgba(255, 255, 255, 0.05)',
+                                borderRadius: '12px',
+                                padding: '1rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.5rem'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#aaa', fontSize: '0.85rem', fontWeight: '500' }}>
+                                    <Clock size={16} style={{ color: 'var(--color-accent)' }} />
+                                    <span>Время просмотра</span>
+                                </div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#fff' }}>
+                                    {formatWatchDuration(watchTime)}
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: '#666' }}>
+                                    Требуется для получения
+                                </div>
+                            </div>
+                        )}
+
                         {/* Start Date Card */}
                         {availability.start && (
                             <div style={{
+                                flex: '1 1 140px',
                                 background: 'rgba(255, 255, 255, 0.03)',
                                 border: '1px solid rgba(255, 255, 255, 0.05)',
                                 borderRadius: '12px',
@@ -559,6 +636,7 @@ const BadgeDetailPage = () => {
                         {/* End Date Card */}
                         {availability.end && (
                             <div style={{
+                                flex: '1 1 140px',
                                 background: 'rgba(255, 255, 255, 0.03)',
                                 border: '1px solid rgba(255, 255, 255, 0.05)',
                                 borderRadius: '12px',
@@ -582,6 +660,7 @@ const BadgeDetailPage = () => {
 
                         {/* Status Card (if Relevant logic exists) */}
                         <div style={{
+                            flex: '1 1 140px',
                             background: isRelevant ? 'rgba(46, 204, 113, 0.1)' : 'rgba(255, 255, 255, 0.03)',
                             border: `1px solid ${isRelevant ? 'rgba(46, 204, 113, 0.2)' : 'rgba(255, 255, 255, 0.05)'}`,
                             borderRadius: '12px',

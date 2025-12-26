@@ -11,6 +11,7 @@ const UserProfile = () => {
     const [userBadgesData, setUserBadgesData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [typeConfig, setTypeConfig] = useState({});
 
     useEffect(() => {
         const baseUrl = import.meta.env.VITE_API_URL || '';
@@ -18,9 +19,10 @@ const UserProfile = () => {
         // Fetch user data
         Promise.all([
             fetch(`${baseUrl}/api/users/${username}`).then(r => r.json()),
-            fetch(`${baseUrl}/api/badges`).then(r => r.json())
+            fetch(`${baseUrl}/api/badges`).then(r => r.json()),
+            fetch(`${baseUrl}/api/types`).then(r => r.json())
         ])
-            .then(([user, badges]) => {
+            .then(([user, badges, types]) => {
                 if (user.error) {
                     setError(user.error);
                     setLoading(false);
@@ -29,6 +31,7 @@ const UserProfile = () => {
 
                 setUserData(user);
                 setAllBadges(Array.isArray(badges) ? badges : []);
+                setTypeConfig(types || {});
 
                 // Match user's badges with full badge data
                 const matched = user.badges
@@ -165,6 +168,7 @@ const UserProfile = () => {
                             key={badge.badge}
                             badge={badge}
                             status="available"
+                            typeConfig={typeConfig}
                         />
                     ))}
                 </div>

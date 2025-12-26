@@ -248,7 +248,7 @@ const AdminPage = () => {
 const BadgeTypesManager = () => {
     const [types, setTypes] = useState({});
     const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState({ key: '', label: '', color: '#3498db' });
+    const [formData, setFormData] = useState({ key: '', label: '', color: '#3498db', isTechnical: false });
     const [msg, setMsg] = useState({ type: '', text: '' });
 
     useEffect(() => {
@@ -287,7 +287,7 @@ const BadgeTypesManager = () => {
 
             setTypes(data.types);
             setMsg({ type: 'success', text: `Тип "${formData.label}" успешно добавлен` });
-            setFormData({ key: '', label: '', color: '#3498db', description: '' });
+            setFormData({ key: '', label: '', color: '#3498db', description: '', isTechnical: false });
         } catch (e) {
             setMsg({ type: 'error', text: e.message || "Ошибка при добавлении" });
         }
@@ -364,6 +364,16 @@ const BadgeTypesManager = () => {
                         />
                     </div>
                 </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', gridColumn: '1 / -1' }}>
+                    <input
+                        type="checkbox"
+                        id="isTechnical"
+                        checked={formData.isTechnical}
+                        onChange={e => setFormData({ ...formData, isTechnical: e.target.checked })}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <label htmlFor="isTechnical" style={{ cursor: 'pointer', fontSize: '0.9rem' }}>Технический тип (скрыт от пользователей)</label>
+                </div>
                 <button
                     type="submit"
                     style={{
@@ -405,6 +415,21 @@ const BadgeTypesManager = () => {
                         }}>
                             {t.label}
                         </div>
+                        {t.isTechnical && (
+                            <div style={{
+                                display: 'inline-block',
+                                padding: '2px 6px',
+                                background: 'rgba(255,255,255,0.1)',
+                                borderRadius: '4px',
+                                fontSize: '0.65rem',
+                                color: '#eee',
+                                marginLeft: '8px',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                verticalAlign: 'middle'
+                            }}>
+                                ТЕХНИЧЕСКИЙ
+                            </div>
+                        )}
                         <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '0.5rem' }}>ID: {key}</div>
                         {t.description && <div style={{ fontSize: '0.8rem', color: '#ccc' }}>{t.description}</div>}
 

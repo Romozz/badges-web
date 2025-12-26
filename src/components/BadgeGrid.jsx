@@ -172,6 +172,7 @@ const BadgeGrid = () => {
 
     // Sort state
     const [sortBy, setSortBy] = useState('default'); // 'default', 'name', 'users-desc', 'users-asc'
+    const [typeConfig, setTypeConfig] = useState({});
 
     const ownershipLabels = {
         'all': 'Все',
@@ -181,11 +182,7 @@ const BadgeGrid = () => {
 
     const costLabels = {
         'all': 'Все типы',
-        'free': 'Бесплатные',
-        'paid': 'Платные',
-        'local': 'Локальные',
-        'canceled': 'Отменённые',
-        'technical': 'Технические'
+        ...Object.fromEntries(Object.entries(typeConfig).map(([k, v]) => [k, v.label]))
     };
 
     const sortLabels = {
@@ -196,10 +193,15 @@ const BadgeGrid = () => {
     };
 
     useEffect(() => {
+        const baseUrl = import.meta.env.VITE_API_URL || '';
         fetchGlobalBadges().then(data => {
             setBadges(data);
             setLoading(false);
         });
+
+        fetch(`${baseUrl}/api/types`)
+            .then(res => res.json())
+            .then(data => setTypeConfig(data));
     }, []);
 
     // Check if badge is owned
@@ -228,16 +230,8 @@ const BadgeGrid = () => {
 
 
         // Cost filter (now checks types array)
-        if (costFilter === 'free') {
-            filtered = filtered.filter(badge => badge.types && badge.types.includes('free'));
-        } else if (costFilter === 'paid') {
-            filtered = filtered.filter(badge => badge.types && badge.types.includes('paid'));
-        } else if (costFilter === 'local') {
-            filtered = filtered.filter(badge => badge.types && badge.types.includes('local'));
-        } else if (costFilter === 'canceled') {
-            filtered = filtered.filter(badge => badge.types && badge.types.includes('canceled'));
-        } else if (costFilter === 'technical') {
-            filtered = filtered.filter(badge => badge.types && badge.types.includes('technical'));
+        if (costFilter !== 'all') {
+            filtered = filtered.filter(badge => badge.types && badge.types.includes(costFilter));
         }
 
         return filtered;
@@ -336,11 +330,10 @@ const BadgeGrid = () => {
                         value={costLabels[costFilter]}
                         options={[
                             { value: 'all', label: 'Все типы' },
-                            { value: 'free', label: 'Бесплатные' },
-                            { value: 'paid', label: 'Платные' },
-                            { value: 'local', label: 'Локальные' },
-                            { value: 'canceled', label: 'Отменённые' },
-                            { value: 'technical', label: 'Технические' }
+                            ...Object.entries(typeConfig).map(([key, config]) => ({
+                                value: key,
+                                label: config.label
+                            }))
                         ]}
                         onSelect={setCostFilter}
                         isOpen={openDropdown === 'cost'}
@@ -419,7 +412,7 @@ const BadgeGrid = () => {
                         <h2 className="section-title">Доступны к получению</h2>
                         <div className="badge-grid">
                             {relevantBadges.map((badge) => (
-                                <BadgeCard key={`relevant-${badge.badge}`} badge={badge} status="available" />
+                                <BadgeCard key={`relevant-${badge.badge}`} badge={badge} status="available" typeConfig={typeConfig} />
                             ))}
                         </div>
                     </div>
@@ -432,7 +425,7 @@ const BadgeGrid = () => {
                         <h2 className="section-title">Скоро станут доступны</h2>
                         <div className="badge-grid">
                             {upcomingBadges.map((badge) => (
-                                <BadgeCard key={`upcoming-${badge.badge}`} badge={badge} status="upcoming" />
+                                <BadgeCard key={`upcoming-${badge.badge}`} badge={badge} status="upcoming" typeConfig={typeConfig} />
                             ))}
                         </div>
                     </div>
@@ -443,7 +436,7 @@ const BadgeGrid = () => {
                 <h2 className="section-title">Все значки</h2>
                 <div className="badge-grid">
                     {allBadges.map((badge) => (
-                        <BadgeCard key={badge.badge} badge={badge} />
+                        <BadgeCard key={badge.badge} badge={badge} typeConfig={typeConfig} />
                     ))}
                 </div>
             </div>

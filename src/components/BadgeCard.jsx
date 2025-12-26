@@ -7,63 +7,72 @@ import { Link } from 'react-router-dom';
 import { User, Clock, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const BadgeCard = ({ badge, status }) => {
+// Generate deterministic gradient variant
+const getVariant = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const positions = ['top right', 'top left', 'bottom right', 'bottom left', 'center right'];
+    const pos = positions[Math.abs(hash) % positions.length];
+
+    // Slight opacity variation
+    const opacity = 0.08 + (Math.abs(hash) % 5) * 0.01; // 0.08 to 0.12
+
+    return {
+        '--gradient-pos': pos,
+        '--gradient-color': `rgba(145, 70, 255, ${opacity})`
+    };
+};
+
+// Format Date Helper
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString('ru-RU', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
+// Time Until Helper
+const getTimeUntil = (dateString) => {
+    if (!dateString) return '';
+    const target = new Date(dateString).getTime();
+    const now = Date.now();
+    const diff = target - now;
+
+    if (diff <= 0) return 'сейчас';
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (days > 0) return `${days} д.`;
+    if (hours > 0) return `${hours} ч.`;
+    return `${minutes} мин.`;
+};
+
+// Format Watch Duration Helper
+const formatWatchDuration = (minutes) => {
+    if (!minutes) return null;
+    const mins = parseInt(minutes);
+    if (mins < 60) return `${mins} мин`;
+    const hours = Math.floor(mins / 60);
+    const remainingMins = mins % 60;
+    if (remainingMins === 0) return `${hours} ч`;
+    return `${hours} ч ${remainingMins} мин`;
+};
+
+const BadgeCard = ({ badge, status, typeConfig = {} }) => {
     const { userBadges } = useAuth();
     const { name, url, user_count, cost, costAmount } = badge;
     const highResUrl = url.replace(/\/(\d)$/, '/3');
 
     // Check ownership
-    // badge.name is the Title (e.g. "Prime Gaming"). 
-    // userBadges is an array of { name: "Prime Gaming", ... }
     const isOwned = userBadges && userBadges.some(b => b.name === name);
-
-    // Generate deterministic gradient variant
-    const getVariant = (str) => {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const positions = ['top right', 'top left', 'bottom right', 'bottom left', 'center right'];
-        const pos = positions[Math.abs(hash) % positions.length];
-
-        // Slight opacity variation
-        const opacity = 0.08 + (Math.abs(hash) % 5) * 0.01; // 0.08 to 0.12
-
-        return {
-            '--gradient-pos': pos,
-            '--gradient-color': `rgba(145, 70, 255, ${opacity})`
-        };
-    };
-
-    // Format Date Helper
-    const formatDate = (dateString) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleString('ru-RU', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    // Time Until Helper
-    const getTimeUntil = (dateString) => {
-        if (!dateString) return '';
-        const target = new Date(dateString).getTime();
-        const now = Date.now();
-        const diff = target - now;
-
-        if (diff <= 0) return 'сейчас';
-
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-        if (days > 0) return `${days} д.`;
-        if (hours > 0) return `${hours} ч.`;
-        return `${minutes} мин.`;
-    };
 
     return (
         <Link to={`/${badge.badge}`} className="badge-card-link">
@@ -85,21 +94,29 @@ const BadgeCard = ({ badge, status }) => {
                         <h3 className="badge-title">{name}</h3>
                         {badge.types && badge.types.length > 0 && (
                             <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-                                {badge.types.map(type => (
-                                    <span key={type} className={`cost-badge ${type}`}>
-                                        {type === 'free' ? 'Бесплатно' :
-                                            type === 'paid' ? `Платно${badge.costAmount ? ` (${badge.costAmount})` : ''}` :
-                                                type === 'local' ? 'Локальный' :
-                                                    type === 'canceled' ? 'Отменён' :
-                                                        type === 'technical' ? 'Технический' : type}
-                                    </span>
-                                ))}
+                                {badge.types.map(type => {
+                                    const conf = typeConfig[type];
+                                    if (!conf) return null; // Hides technical or unknown types
+                                    return (
+                                        <span key={type} className={`cost-badge`} style={{
+                                            background: conf.bg,
+                                            color: conf.color,
+                                            border: `1px solid ${conf.border}`,
+                                            padding: '2px 6px',
+                                            borderRadius: '4px',
+                                            fontSize: '0.7rem',
+                                            fontWeight: '600'
+                                        }}>
+                                            {conf.label}
+                                            {type === 'paid' && badge.costAmount && ` (${badge.costAmount})`}
+                                            {type === 'free' && badge.watchTime && ` (${formatWatchDuration(badge.watchTime)})`}
+                                        </span>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
                 </div>
-
-                {/* Owned badges have a purple glow border */}
 
                 <div className="badge-stats" style={{
                     width: '100%',

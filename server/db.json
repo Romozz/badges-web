@@ -129,24 +129,12 @@
     "purple-noob": "2025-12-15T19:55:25.105Z"
   },
   "availability": {
+    "twitch-recap-2023": {
+      "start": "2025-12-16T23:30:00.000Z",
+      "end": "2026-01-05T07:59:00.000Z"
+    },
     "purple-noob": {
-      "start": "2025-12-16T06:00:00.000Z",
-      "end": "2025-12-22T06:00:00.000Z"
-    },
-    "fallout-season-2-ghoul": {
-      "start": "2025-12-18T06:00:00.000Z",
-      "end": "2026-01-01T08:00:00.000Z"
-    },
-    "10-years-as-twitch-staff": {
-      "start": "2025-12-23T21:00:00.000Z",
-      "end": null
-    },
-    "tft-paris-open": {
-      "start": "2025-12-23T21:00:00.000Z",
-      "end": null
-    },
-    "frog-lantern": {
-      "start": "2025-12-25T21:00:00.000Z",
+      "start": "2025-12-25T14:48:00.000Z",
       "end": null
     }
   },
@@ -172,6 +160,121 @@
       "free"
     ],
     "borderlands-4-badge---vault-symbol": [
+      "game",
+      "free"
+    ],
+    "fallout-season-2-ghoul": [
+      "paid",
+      "testtt"
+    ],
+    "zevent25": [
+      "charity",
+      "free"
+    ],
+    "stream-for-humanity-2-2025": [
+      "charity",
+      "free"
+    ],
+    "lol-worlds-2025": [
+      "event",
+      "free"
+    ],
+    "vct-paris-2025": [
+      "event",
+      "free"
+    ],
+    "clips-leader": [
+      "clip",
+      "free"
+    ],
+    "together-for-good-25-good-badge": [
+      "charity",
+      "free"
+    ],
+    "together-for-good-25-gooder-badge": [
+      "charity",
+      "free"
+    ],
+    "together-for-good-25-goodest-badge": [
+      "charity",
+      "free"
+    ],
+    "together-for-good-25---good-badge": [
+      "charity",
+      "free"
+    ],
+    "together-for-good-25---gooder-badge": [
+      "charity",
+      "free"
+    ],
+    "together-for-good-25---goodest-badge": [
+      "charity",
+      "free"
+    ],
+    "together-for-good-25---wicked-dub-badge": [
+      "charity",
+      "free"
+    ],
+    "survival-cup-4": [
+      "event",
+      "game",
+      "free"
+    ],
+    "dragonscimmy": [
+      "game",
+      "free"
+    ],
+    "rainbow-six-siege-x-10th-anniversary": [
+      "game",
+      "event",
+      "free"
+    ],
+    "ugly-sweater": [
+      "event",
+      "free"
+    ],
+    "streamer-awards-tux": [
+      "event",
+      "free"
+    ],
+    "twitch-recap-2025": [
+      "event",
+      "free"
+    ],
+    "revedtv-streamawards-2025": [
+      "event",
+      "free"
+    ],
+    "revedtv-stream-awards-2025": [
+      "event",
+      "free"
+    ],
+    "total-war-anniversary": [
+      "game",
+      "free"
+    ],
+    "rustmas-2025": [
+      "game",
+      "free"
+    ],
+    "k4sen-con-2025": [
+      "event",
+      "free"
+    ],
+    "jeff-the-land-shark": [
+      "game",
+      "free"
+    ],
+    "raider-icon-badge": [
+      "game",
+      "free"
+    ],
+    "hunt-crosses": [
+      "game",
+      "free"
+    ],
+    "frog-lantern": [
+      "game",
       "free"
     ]
   },
@@ -210,8 +313,41 @@
       "label": "test",
       "color": "#3498db",
       "bg": "rgba(52, 152, 219, 0.15)",
-      "border": "rgba(52, 152, 219, 0.3)",
-      "description": ""
+      "border": "rgba(52, 152, 219, 0.3)"
+    },
+    "testtt": {
+      "label": "testtt",
+      "isTechnical": true,
+      "color": "#3498db",
+      "bg": "rgba(52, 152, 219, 0.15)",
+      "border": "rgba(52, 152, 219, 0.3)"
+    },
+    "charity": {
+      "label": "Благотворительность",
+      "color": "#e91e63",
+      "bg": "rgba(233, 30, 99, 0.15)",
+      "border": "rgba(233, 30, 99, 0.3)"
+    },
+    "event": {
+      "label": "Событие",
+      "color": "#9b59b6",
+      "bg": "rgba(155, 89, 182, 0.15)",
+      "border": "rgba(155, 89, 182, 0.3)"
+    },
+    "game": {
+      "label": "Игра",
+      "color": "#f1c40f",
+      "bg": "rgba(241, 196, 15, 0.15)",
+      "border": "rgba(241, 196, 15, 0.3)"
+    },
+    "clip": {
+      "label": "Клип",
+      "color": "#1abc9c",
+      "bg": "rgba(26, 188, 156, 0.15)",
+      "border": "rgba(26, 188, 156, 0.3)"
     }
+  },
+  "watch_times": {
+    "tft-paris-open": 90
   }
 }

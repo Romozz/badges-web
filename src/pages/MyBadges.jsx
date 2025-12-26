@@ -8,12 +8,19 @@ const MyBadges = () => {
     const { user, userBadges } = useAuth();
     const [allBadges, setAllBadges] = useState([]);
     const [myBadgesData, setMyBadgesData] = useState([]);
+    const [typeConfig, setTypeConfig] = useState({});
 
     useEffect(() => {
+        const baseUrl = import.meta.env.VITE_API_URL || '';
         // Fetch all badges to get full badge data
         fetchGlobalBadges().then(badges => {
             setAllBadges(badges);
         });
+
+        // Fetch types
+        fetch(`${baseUrl}/api/types`)
+            .then(res => res.json())
+            .then(data => setTypeConfig(data));
     }, []);
 
     useEffect(() => {
@@ -74,6 +81,7 @@ const MyBadges = () => {
                         key={badge.badge}
                         badge={badge}
                         status="available"
+                        typeConfig={typeConfig}
                     />
                 ))}
             </div>

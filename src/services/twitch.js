@@ -111,12 +111,12 @@ export const saveBadgeCost = async (id, cost, amount) => {
     }
 };
 
-export const saveBadgeTypes = async (id, types, amount) => {
+export const saveBadgeTypes = async (id, types, amount, watchTime) => {
     try {
         const res = await fetch(`${API_URL}/api/badges/${id}/types`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ types, amount })
+            body: JSON.stringify({ types, amount, watchTime })
         });
         return await res.json();
     } catch (error) {

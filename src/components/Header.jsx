@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, LogOut, User, Award, BarChart3, Search } from 'lucide-react';
+import { LogIn, LogOut, User, Award, BarChart3, Search, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -185,6 +185,9 @@ const Header = () => {
                             </Link>
                             <Link to="/stats" className="header-icon-btn" title="Статистика">
                                 <BarChart3 size={18} />
+                            </Link>
+                            <Link to="/recap/2025" className="header-icon-btn" title="Итоги 2025" style={{ color: '#a78bfa' }}>
+                                <Zap size={18} />
                             </Link>
                             <Link
                                 to={`/user/${user.name}`}

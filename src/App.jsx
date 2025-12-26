@@ -9,6 +9,7 @@ import AdminPage from './pages/AdminPage';
 import StatsPage from './pages/StatsPage';
 import UserProfile from './pages/UserProfile';
 import OverlayPage from './pages/OverlayPage';
+import RecapPage from './pages/RecapPage';
 
 function App() {
     return (
@@ -38,6 +39,7 @@ function App() {
                         <Route path="/stats" element={<StatsPage />} />
                         <Route path="/user/:username" element={<UserProfile />} />
                         <Route path="/admin" element={<AdminPage />} />
+                        <Route path="/recap/2025" element={<RecapPage />} />
                         <Route path="/:badgeId" element={<BadgeDetailPage />} />
                     </Routes>
                 </Layout>
