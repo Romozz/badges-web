@@ -103,7 +103,13 @@ router.get('/2025', (req, res) => {
 
     // 3. Financials
     const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
-    const geo = geoip.lookup(ip);
+    let geo = geoip.lookup(ip);
+
+    // Force RU for localhost or private IPs
+    if (ip === '::1' || ip === '127.0.0.1' || ip.includes('127.0.0.1') || ip.includes('192.168.') || !geo) {
+        geo = { country: 'RU' };
+    }
+
     const countryCode = geo ? geo.country : 'DEFAULT';
     const countryPricing = pricing[countryCode] || pricing['DEFAULT'];
     console.log(`Detected IP: ${ip}, Country: ${countryCode}`);
@@ -252,20 +258,20 @@ router.get('/2025', (req, res) => {
     // Collector Level - Point Based System
     let totalPoints = 0;
     badges2025.forEach(b => {
-        if (b.user_count < 1000) totalPoints += 100;
-        else if (b.user_count < 10000) totalPoints += 40;
-        else if (b.user_count < 50000) totalPoints += 15;
-        else totalPoints += 5;
+        if (b.user_count < 1000) totalPoints += 200;
+        else if (b.user_count < 10000) totalPoints += 75;
+        else if (b.user_count < 50000) totalPoints += 25;
+        else totalPoints += 10;
     });
 
-    let collectorLevel = "Активный Зритель";
-    if (totalPoints >= 5000) collectorLevel = "Мифический Повелитель";
-    else if (totalPoints >= 2500) collectorLevel = "Алмазный Коллекционер";
-    else if (totalPoints >= 1200) collectorLevel = "Платиновый Охотник";
-    else if (totalPoints >= 600) collectorLevel = "Элитный Искатель";
-    else if (totalPoints >= 300) collectorLevel = "Золотой Профи";
-    else if (totalPoints >= 150) collectorLevel = "Серебряный Зритель";
-    else if (totalPoints >= 80) collectorLevel = "Бронзовый Участник";
+    let collectorData = { title: "Активный Зритель", tier: "Начинающий", desc: "Ты только начинаешь свой путь в мире значков. Впереди тысячи стримов, сотни дропов и множество редких наград. Главное — не останавливаться!" };
+    if (totalPoints >= 3000) collectorData = { title: "Мифический Повелитель", tier: "Божественный", desc: "Ты достиг вершины, недоступной для простых смертных. Твоя коллекция — это музей истории Twitch, а твое имя шепотом передают в чатах. Ты — живая легенда." };
+    else if (totalPoints >= 2000) collectorData = { title: "Алмазный Коллекционер", tier: "Элитный", desc: "Твоя коллекция сияет ярче алмазов. Ты собрал самые редкие и ценные экземпляры, вызывая зависть и уважение у всего сообщества." };
+    else if (totalPoints >= 1200) collectorData = { title: "Платиновый Охотник", tier: "Высокий", desc: "Ты входишь в элиту коллекционеров. Твоя настойчивость и внимание к деталям позволили собрать внушительный арсенал наград." };
+    else if (totalPoints >= 600) collectorData = { title: "Элитный Искатель", tier: "Продвинутый", desc: "Ты уже понял, как работает эта система. Твоя коллекция растет с каждым днем, и ты точно знаешь, какой дроп заберешь следующим." };
+    else if (totalPoints >= 300) collectorData = { title: "Золотой Профи", tier: "Средний", desc: "Уверенная середина пройдена. У тебя отличный вкус на значки, и ты не пропускаешь важные события. Так держать!" };
+    else if (totalPoints >= 150) collectorData = { title: "Серебряный Зритель", tier: "Базовый", desc: "Ты уже не новичок и знаешь цену редким значкам. Твоя коллекция начинает обретать форму, и самые крутые трофеи еще впереди." };
+    else if (totalPoints >= 80) collectorData = { title: "Бронзовый Участник", tier: "Начинающий", desc: "Первые важные шаги сделаны. Твоя коллекция начала расти, и это только начало большого приключения!" };
 
     // 2026 Prediction
     let prediction = "Будущая Легенда";
@@ -277,9 +283,8 @@ router.get('/2025', (req, res) => {
     else if (gameCount > 3) prediction = "Геймер-Профи 2026";
     else if (rarestBadge && rarestBadge.user_count < 500) prediction = "Легенда Скрытых Дропов 2026";
     else if (rarestBadge && rarestBadge.user_count < 2000) prediction = "Охотник за Глитчами 2026";
-    else if (isNightOwl && maxStreak > 10) prediction = "Ночной Хранитель Твича 2026";
-    else if (totalSpent > 1000) prediction = "VIP-Меценат Платформы 2026";
-    else if (completionistScore > 80) prediction = "Абсолютный Перфекционист 2026";
+    else if (totalSpent > 1000) prediction = "VIP-Меценат Твича 2026";
+    else if (completionistScore > 70) prediction = "Абсолютный Перфекционист 2026";
 
     // Global Impact (Total hero users for charity badges)
     let totalCharityHeroes = 0;
@@ -320,11 +325,6 @@ router.get('/2025', (req, res) => {
     // Define potential archetypes with scoring
     const archetypeScores = [
         {
-            type: "Меценат",
-            score: charityCount * 8,
-            desc: "Для тебя Twitch — это прежде всего возможность помогать. Ты собрал почти все благотворительные значки 2025 года, став опорой для многих инициатив."
-        },
-        {
             type: "Легендарный Геймер",
             score: gameCount * 4,
             desc: "Киберспорт и игровые релизы — твоя стихия. Ты не пропускаешь ни одного важного ивента и твоя коллекция — настоящий зал славы видеоигр."
@@ -335,19 +335,9 @@ router.get('/2025', (req, res) => {
             desc: "Ты охотишься за тем, что другие даже не замечают. В твоем арсенале есть значки, обладателями которых являются лишь единицы."
         },
         {
-            type: "Звезда Хайлайтов",
+            type: "Звезда Клипов",
             score: clipCount * 4,
             desc: "Ты всегда там, где создается контент. Клипы — твоя страсть, и твоя коллекция отражает самые виральные моменты этого года."
-        },
-        {
-            type: "Ночной Страж",
-            score: dayNight.night > dayNight.day * 1.5 ? 15 : 0,
-            desc: "Твое время — глубокая ночь. Ты — тот самый зритель, который остается до конца стрима и забирает самые редкие ночные дропы."
-        },
-        {
-            type: "Ранняя Пташка",
-            score: dayNight.day > dayNight.night * 1.5 ? 15 : 0,
-            desc: "Ты просыпаешься вместе с платформой. Твои значки получены в лучах утреннего солнца, когда чат еще только начинает просыпаться."
         },
         {
             type: "Абсолютный Фанат",
@@ -355,7 +345,7 @@ router.get('/2025', (req, res) => {
             desc: "Твоя преданность поражает. Ты собрал больше половины всех значков года, став живой энциклопедий событий Twitch 2025."
         },
         {
-            type: "Дроп-Хантер",
+            type: "Халявщик",
             score: freeCount / (paidCount + 1) > 5 ? 20 : 0,
             desc: "Ты — мастер бесплатного фарма. Твоя коллекция огромна, и ты не потратил на неё ни копейки, используя лишь свою выдержку."
         },
@@ -368,6 +358,16 @@ router.get('/2025', (req, res) => {
             type: "Марафонец",
             score: maxStreak * 3,
             desc: "Твое постоянство — твоя суперсила. Ты неделя за неделей забирал дропы без пропусков, показав невероятную дисциплину."
+        }, ,
+        {
+            type: "Зимний Страж",
+            score: seasonalCounts.winter > (badges2025.length * 0.5) ? 25 : 0,
+            desc: "Твоя активность зашкаливает, когда на улице холодно. Ты согреваешься свежими значками и уютными стримами."
+        },
+        {
+            type: "Летний Вайб",
+            score: seasonalCounts.summer > (badges2025.length * 0.5) ? 25 : 0,
+            desc: "Твое лето прошло на Твиче. Жаркие дни, горячие значки и солнечные коллекции — это твой стиль 2025 года."
         }
     ];
 
@@ -417,7 +417,9 @@ router.get('/2025', (req, res) => {
             paid: paidCount,
             watchTime: totalWatchTime,
             completionistScore,
-            collectorLevel,
+            collectorLevel: collectorData.title,
+            collectorTier: collectorData.tier,
+            collectorDesc: collectorData.desc,
             prediction,
             archetype,
             archetypeDesc,

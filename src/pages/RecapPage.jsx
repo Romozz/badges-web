@@ -33,13 +33,15 @@ const RecapPage = () => {
                 const canvas = await html2canvas(shareCardRef.current, {
                     scale: 2, // High resolution
                     backgroundColor: '#0f172a',
-                    useCORS: true // Attempt to handle cross-origin images (might need proxy if fails)
+                    useCORS: true // Attempt to handle cross-origin images
                 });
 
                 const link = document.createElement('a');
                 link.download = `badges-recap-2025-${new Date().getTime()}.png`;
                 link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
                 link.click();
+                document.body.removeChild(link);
             }
         } catch (err) {
             console.error("Failed to generate image", err);
@@ -477,8 +479,9 @@ const RecapPage = () => {
                         <div style={{ fontSize: '14px', color: '#a78bfa', fontWeight: 'bold', textTransform: 'uppercase' }}>Твой статус</div>
                     </div>
                     <div style={{ fontSize: '32px', fontWeight: '900', color: 'white', marginBottom: '8px' }}>{data.stats.collectorLevel}</div>
+                    <div style={{ fontSize: '14px', color: '#a78bfa', fontWeight: 'bold', marginBottom: '8px' }}>Ранг: {data.stats.collectorTier}</div>
                     <p style={{ fontSize: '14px', color: '#9ca3af', lineHeight: '1.5' }}>
-                        Это твое текущее звание в мире коллекционеров. Твой вклад в сообщество и настойчивость заслуживают уважения! Продолжай в том же духе в 2026 году.
+                        {data.stats.collectorDesc}
                     </p>
                 </div>
             </div>

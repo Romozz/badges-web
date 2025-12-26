@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-    Trophy, Zap, Moon, Sun, Clock, CreditCard, Heart, Compass, Users, User, Star, Send, Hash, Award, Film, Activity, Calendar
+    Trophy, Zap, Moon, Sun, Clock, CreditCard, Heart, Compass, Users, User, Star, Send, Hash, Award, Film, Activity, Calendar, Fingerprint
 } from 'lucide-react';
 
 const formatTime = (minutes) => {
@@ -77,16 +77,22 @@ const ShareCard = React.forwardRef(({ data }, ref) => {
                         </div>
                         <div>
                             <div style={{ fontSize: '14px', color: '#c084fc', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 'bold' }}>Ранг коллекционера</div>
-                            <div style={{ fontSize: '24px', fontWeight: '900' }}>{data.stats.collectorLevel}</div>
+                            <div style={{ fontSize: '24px', fontWeight: '900', lineHeight: '1.2' }}>{data.stats.collectorLevel}</div>
+                            <div style={{ fontSize: '11px', color: '#d8b4fe', marginTop: '4px', lineHeight: '1.2', opacity: 0.9 }}>{data.stats.collectorDesc}</div>
                         </div>
                     </div>
-                    <div style={{ padding: '20px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '24px', border: '1px solid rgba(245, 158, 11, 0.3)', display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <div style={{ background: 'rgba(245, 158, 11, 0.2)', padding: '16px', borderRadius: '16px' }}>
-                            <Zap size={32} color="#fbbf24" fill="#fbbf24" />
+                    <div style={{ padding: '20px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '24px', border: '1px solid rgba(245, 158, 11, 0.3)', display: 'flex', alignItems: 'center', gap: '20px', gridColumn: 'span 1' }}>
+                        <div style={{ background: 'rgba(245, 158, 11, 0.2)', padding: '16px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Fingerprint size={32} color="#fbbf24" strokeWidth={2} />
                         </div>
-                        <div>
-                            <div style={{ fontSize: '14px', color: '#fbbf24', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 'bold' }}>Рекордная серия</div>
-                            <div style={{ fontSize: '28px', fontWeight: '900' }}>{data.visuals.maxStreak} недель</div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '14px', color: '#fbbf24', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 'bold' }}>Твой Архетип</div>
+                            <div style={{ fontSize: '24px', fontWeight: '900', color: 'white', lineHeight: '1.2' }}>{data.stats.archetype}</div>
+                            {data.stats.archetypeDesc && (
+                                <div style={{ fontSize: '12px', color: '#e5e7eb', marginTop: '6px', lineHeight: '1.4', opacity: 0.9, fontStyle: 'italic' }}>
+                                    "{data.stats.archetypeDesc}"
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -228,7 +234,7 @@ const ShareCard = React.forwardRef(({ data }, ref) => {
                             <div style={{ background: '#24A1DE', padding: '2px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase' }}>Telegram</div>
                         </div>
                         <div style={{ fontSize: '14px', color: '#9ca3af', fontWeight: '500', lineHeight: '1.4' }}>
-                            Twitch Badges — ваш лучший источник новинок о значках на Twitch! Присоединяйтесь, чтобы не пропустить ни одного значка.
+                            Twitch Badges — ваш лучший источник новинок о значках на Twitch!
                         </div>
                     </div>
                 </div>
