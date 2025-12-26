@@ -449,7 +449,7 @@ const RecapPage = () => {
                     <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'white' }}>Твоя история 2025 года</h3>
                 </div>
                 <p style={{ color: '#9ca3af', fontSize: '15px', marginBottom: '32px', maxWidth: '800px', lineHeight: '1.6' }}>
-                    Каждая коллекция начинается с первого шага. Давай вспомним ключевые моменты твоего пути: от самого первого обретенного значка до редчайших трофеев, которые теперь украшают твой профиль. Это была славная охота!
+                    Каждая коллекция начинается с первого шага. Давай вспомним ключевые моменты твоего пути: от самого первого обретенного значка до редчайших значков, которые теперь украшают твой профиль. Это была славная охота!
                 </p>
                 <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '24px', overflowX: 'auto', paddingBottom: '20px' }}>
                     <div style={{ position: 'absolute', top: '32px', left: '40px', right: '40px', height: '2px', background: 'linear-gradient(90deg, #312e81, #9333ea, #312e81)', zIndex: 0 }}></div>
@@ -641,7 +641,7 @@ const RecapPage = () => {
                             <div style={{ background: 'rgba(245, 158, 11, 0.1)', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <Trophy size={14} color="#f59e0b" />
                             </div>
-                            <div style={{ color: '#f59e0b', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Главный трофей</div>
+                            <div style={{ color: '#f59e0b', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Главный значок</div>
                         </div>
                         {data.highlights.rarest ? (
                             <>
@@ -880,7 +880,7 @@ const RecapPage = () => {
                         <p style={{ fontSize: '14px', color: '#9ca3af', lineHeight: '1.6', opacity: 0.9 }}>
                             {data.visuals.isNightOwl
                                 ? 'Когда большинство спит, ты на посту. Твоя коллекция — результат ночных бдений и преданности любимым стримерам. Ты настоящий хранитель ночного эфира.'
-                                : 'Ты всегда в первых рядах. Большинство твоих трофеев получены, пока день еще только начинается. Твоя энергия — залог успешного сбора самых свежих значков.'}
+                                : 'Ты всегда в первых рядах. Большинство твоих значков получены, пока день еще только начинается. Твоя энергия — залог успешного сбора самых свежих значков.'}
                         </p>
                         <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '12px', fontStyle: 'italic' }}>
                             * Определено по среднему времени твоей активности в 2025 году.
@@ -936,7 +936,7 @@ const RecapPage = () => {
                             </div>
                         ))}
                     </div>
-                    <p style={{ fontSize: '13px', color: '#6b7280', lineHeight: '1.4' }}>Каждый сезон приносил новые испытания и уникальные трофеи в твою коллекцию.</p>
+                    <p style={{ fontSize: '13px', color: '#6b7280', lineHeight: '1.4' }}>Каждый сезон приносил новые испытания и уникальные значки в твою коллекцию.</p>
                 </div>
 
                 <div style={{ background: '#111827', border: '1px solid #1f2937', borderRadius: '32px', padding: '32px' }}>

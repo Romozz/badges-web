@@ -105,14 +105,22 @@ router.get('/2025', (req, res) => {
     const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
     let geo = geoip.lookup(ip);
 
-    // Force RU for localhost or private IPs (127.x, 192.168.x, 10.x, 172.x)
-    if (ip === '::1' || ip.includes('127.') || ip.includes('192.168.') || ip.includes('10.') || ip.startsWith('172.') || !geo) {
-        geo = { country: 'RU' };
+    // Default to RU if geo lookup fails or if IP is private/local
+    let countryCode = geo ? geo.country : 'RU';
+
+    // Explicitly force RU for private networks and empty IPs
+    // Docker often uses 172.x, Local 192.168.x/10.x, Localhost 127.x
+    if (!ip || ip === '::1' || ip.includes('127.') || ip.includes('192.168.') || ip.includes('10.') || ip.startsWith('172.')) {
+        countryCode = 'RU';
     }
 
-    const countryCode = geo ? geo.country : 'DEFAULT';
-    const countryPricing = pricing[countryCode] || pricing['DEFAULT'];
-    console.log(`Detected IP: ${ip}, Country: ${countryCode}`);
+    console.log(`Detected IP: "${ip}", Geo: ${JSON.stringify(geo)}, Final Country: ${countryCode}`);
+
+    let countryPricing = pricing[countryCode];
+    // Fallback to RU pricing if specific country not found in pricing.json
+    if (!countryPricing) {
+        countryPricing = pricing['RU'] || { price: 130, currency: 'RUB' };
+    }
 
     let totalSpent = 0;
     const costAmounts = db.cost_amounts || {};
@@ -270,7 +278,7 @@ router.get('/2025', (req, res) => {
     else if (totalPoints >= 1200) collectorData = { title: "Платиновый Охотник", tier: "Высокий", desc: "Ты входишь в элиту коллекционеров. Твоя настойчивость и внимание к деталям позволили собрать внушительный арсенал наград." };
     else if (totalPoints >= 600) collectorData = { title: "Элитный Искатель", tier: "Продвинутый", desc: "Ты уже понял, как работает эта система. Твоя коллекция растет с каждым днем, и ты точно знаешь, какой значок заберешь следующим." };
     else if (totalPoints >= 300) collectorData = { title: "Золотой Профи", tier: "Средний", desc: "Уверенная середина пройдена. У тебя отличный вкус на значки, и ты не пропускаешь важные события. Так держать!" };
-    else if (totalPoints >= 150) collectorData = { title: "Серебряный Зритель", tier: "Базовый", desc: "Ты уже не новичок и знаешь цену редким значкам. Твоя коллекция начинает обретать форму, и самые крутые трофеи еще впереди." };
+    else if (totalPoints >= 150) collectorData = { title: "Серебряный Зритель", tier: "Базовый", desc: "Ты уже не новичок и знаешь цену редким значкам. Твоя коллекция начинает обретать форму, и самые крутые значки еще впереди." };
     else if (totalPoints >= 80) collectorData = { title: "Бронзовый Участник", tier: "Начинающий", desc: "Первые важные шаги сделаны. Твоя коллекция начала расти, и это только начало большого приключения!" };
 
     // 2026 Prediction

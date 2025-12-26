@@ -24,7 +24,7 @@ const ShareCard = React.forwardRef(({ data }, ref) => {
             left: '-2000px',
             display: 'flex',
             flexDirection: 'column',
-            padding: '40px', // Updated padding
+            padding: '40px 40px 60px 40px', // Updated padding for footer safety
             boxSizing: 'border-box',
             fontFamily: 'Inter, sans-serif',
             color: 'white',
@@ -49,7 +49,7 @@ const ShareCard = React.forwardRef(({ data }, ref) => {
             </div>
 
             {/* Main Content */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', position: 'relative', zIndex: 10 }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative', zIndex: 10 }}>
 
                 {/* Global Rank & Total Stats Row */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '16px' }}>
@@ -188,7 +188,7 @@ const ShareCard = React.forwardRef(({ data }, ref) => {
                         <div style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(17, 24, 39, 0.6) 100%)', borderRadius: '24px', padding: '20px', border: '1px solid rgba(245, 158, 11, 0.3)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', textTransform: 'uppercase', marginBottom: '16px', fontWeight: 'bold', letterSpacing: '1px' }}>
                                 <Award size={16} />
-                                <div style={{ fontSize: '14px' }}>Главный трофей</div>
+                                <div style={{ fontSize: '14px' }}>Главный значок</div>
                             </div>
                             <img src={data.highlights.rarest.url} style={{ width: '100px', height: '100px', marginBottom: '16px', filter: 'drop-shadow(0 0 15px rgba(245, 158, 11, 0.4))' }} alt="" />
                             <div style={{ fontSize: '20px', fontWeight: '900', color: 'white', marginBottom: '8px', lineHeight: '1.2' }}>{data.highlights.rarest.name}</div>
