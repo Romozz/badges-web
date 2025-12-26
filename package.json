@@ -7,10 +7,12 @@
     "dev": "vite --host",
     "build": "vite build && rsync -avz dist/ /var/www/badges-web",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "move": "cp -r server/middleware/* /root/badges-web/server/middleware/ && cp -r server/data/* /root/badges-web/server/data/ && cp -r server/routes/* /root/badges-web/server/routes/ && cp -r server/utils/* /root/badges-web/server/utils/"
   },
   "dependencies": {
     "axios": "^1.13.2",
+    "html2canvas": "^1.4.1",
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

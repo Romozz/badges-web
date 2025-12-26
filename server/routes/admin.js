@@ -91,4 +91,42 @@ router.get('/users', (req, res) => {
     res.json(users);
 });
 
+router.post('/impersonate', (req, res) => {
+    const { username } = req.body;
+    if (!username) return res.status(400).json({ error: "Username required" });
+
+    const userBadges = getUserBadgesData();
+    const normalized = username.trim().toLowerCase();
+
+    // Find user in our data by login
+    const targetId = Object.keys(userBadges).find(id => userBadges[id].login === normalized);
+    const targetUser = targetId ? userBadges[targetId] : null;
+
+    if (!targetUser) {
+        return res.status(404).json({ error: "Пользователь не найден в базе данных. Он должен сначала авторизоваться на сайте хотя бы раз." });
+    }
+
+    // Determine roles for the impersonated session
+    const db = getDb();
+    const isTargetCreator = targetUser.login === 'rom0zzz';
+    const isTargetAdmin = isTargetCreator || (db.admins && db.admins.includes(targetUser.login));
+
+    const roles = [];
+    if (isTargetCreator) roles.push('creator');
+    if (isTargetAdmin) roles.push('admin');
+
+    // Overwrite session
+    req.session.user = {
+        id: targetId,
+        name: targetUser.login,
+        display_name: targetUser.display_name || targetUser.login,
+        profile_image_url: targetUser.profile_image_url || `https://static-cdn.jtvnw.net/user-default-pictures-uv/cdd517fe-def4-11e9-948e-784f43822e80-profile_image-300x300.png`,
+        color: targetUser.color || null,
+        roles: roles,
+        impersonatedBy: req.session.user.login // Track who impersonated for logging if needed
+    };
+
+    res.json({ success: true, user: req.session.user });
+});
+
 module.exports = router;

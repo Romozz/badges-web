@@ -37,6 +37,7 @@ router.get('/2025', (req, res) => {
     const normalizedOwnNames = ownBadgeNames.map(n => normalize(n));
 
     const badges2025 = badgesCache.filter(b => {
+        b.url = b.url.slice(0, -1) + '3'
         const addedDate = allAddedDates[b.badge] || allAddedDates[b.base_id];
         if (!addedDate) return false;
         const year = new Date(addedDate).getFullYear();
@@ -85,8 +86,13 @@ router.get('/2025', (req, res) => {
 
         // Rarity (Min user_count)
         if (!rarestBadge || b.user_count < rarestBadge.user_count) rarestBadge = b;
-        // Popular (Max user_count)
-        if (!popularBadge || b.user_count > popularBadge.user_count) popularBadge = b;
+
+        // Popular (Max user_count) - Try to pick one different from firstBadge if counts are equal
+        if (!popularBadge || b.user_count > popularBadge.user_count) {
+            popularBadge = b;
+        } else if (popularBadge && b.user_count === popularBadge.user_count && firstBadge && b.badge !== firstBadge.badge) {
+            popularBadge = b;
+        }
 
         // First Badge (Earliest added_date)
         const addedDate = new Date(allAddedDates[b.badge] || allAddedDates[b.base_id]);
@@ -96,10 +102,11 @@ router.get('/2025', (req, res) => {
     });
 
     // 3. Financials
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
     const geo = geoip.lookup(ip);
-    const countryCode = geo ? geo.country : 'US';
+    const countryCode = geo ? geo.country : 'DEFAULT';
     const countryPricing = pricing[countryCode] || pricing['DEFAULT'];
+    console.log(`Detected IP: ${ip}, Country: ${countryCode}`);
 
     let totalSpent = 0;
     const costAmounts = db.cost_amounts || {};
@@ -132,8 +139,10 @@ router.get('/2025', (req, res) => {
     let maxOverlap = -1;
     const my2025BadgeNames = badges2025.map(b => b.name);
 
-    allUsers.forEach(u => {
-        if (u.login === currentUser.login) return;
+    Object.entries(userData).forEach(([uid, u]) => {
+        // Strict ID check to prevent self-match
+        if (String(uid) === String(userId)) return;
+
         const their2025Badges = u.badges.filter(name => {
             const b = badgeMap.get(name);
             if (!b) return false;
@@ -240,18 +249,23 @@ router.get('/2025', (req, res) => {
     });
     const survivorBadge = survivors.length > 0 ? survivors[0] : null;
 
-    // Collector Level
-    // Based on average user_count (rarity)
-    const avgRarity = badges2025.reduce((sum, b) => sum + b.user_count, 0) / badges2025.length;
-    let collectorLevel = "Новичок";
-    if (avgRarity < 1000) collectorLevel = "Мифический Повелитель";
-    else if (avgRarity < 3000) collectorLevel = "Алмазный Коллекционер";
-    else if (avgRarity < 7000) collectorLevel = "Платиновый Охотник";
-    else if (avgRarity < 15000) collectorLevel = "Элитный Искатель";
-    else if (avgRarity < 30000) collectorLevel = "Золотой Профи";
-    else if (avgRarity < 60000) collectorLevel = "Серебряный Зритель";
-    else if (avgRarity < 100000) collectorLevel = "Бронзовый Участник";
-    else if (avgRarity < 200000) collectorLevel = "Активный Зритель";
+    // Collector Level - Point Based System
+    let totalPoints = 0;
+    badges2025.forEach(b => {
+        if (b.user_count < 1000) totalPoints += 100;
+        else if (b.user_count < 10000) totalPoints += 40;
+        else if (b.user_count < 50000) totalPoints += 15;
+        else totalPoints += 5;
+    });
+
+    let collectorLevel = "Активный Зритель";
+    if (totalPoints >= 5000) collectorLevel = "Мифический Повелитель";
+    else if (totalPoints >= 2500) collectorLevel = "Алмазный Коллекционер";
+    else if (totalPoints >= 1200) collectorLevel = "Платиновый Охотник";
+    else if (totalPoints >= 600) collectorLevel = "Элитный Искатель";
+    else if (totalPoints >= 300) collectorLevel = "Золотой Профи";
+    else if (totalPoints >= 150) collectorLevel = "Серебряный Зритель";
+    else if (totalPoints >= 80) collectorLevel = "Бронзовый Участник";
 
     // 2026 Prediction
     let prediction = "Будущая Легенда";
@@ -296,15 +310,7 @@ router.get('/2025', (req, res) => {
     };
 
     // Fun Facts & Diverse Stats
-    const hours = badges2025.map(b => new Date(allAddedDates[b.badge] || allAddedDates[b.base_id]).getHours());
-    const hourCounts = {};
-    hours.forEach(h => hourCounts[h] = (hourCounts[h] || 0) + 1);
-    const luckyHour = Object.keys(hourCounts).length > 0
-        ? Object.keys(hourCounts).reduce((a, b) => hourCounts[a] > hourCounts[b] ? a : b)
-        : 12;
-
     const diversityScore = Object.values(categories).filter(v => v > 0).length;
-    const luckyHourText = `${luckyHour}:00`;
     const favoriteType = Object.keys(categories).reduce((a, b) => categories[a] > categories[b] ? a : b, 'event');
 
     // Collector Archetype with Descriptions
@@ -315,53 +321,53 @@ router.get('/2025', (req, res) => {
     const archetypeScores = [
         {
             type: "Меценат",
-            score: charityCount * 5,
-            desc: "Ты стремишься сделать мир лучше, поддерживая важные инициативы. Твоя доброта не знает границ."
+            score: charityCount * 8,
+            desc: "Для тебя Twitch — это прежде всего возможность помогать. Ты собрал почти все благотворительные значки 2025 года, став опорой для многих инициатив."
         },
         {
             type: "Легендарный Геймер",
-            score: gameCount * 3,
-            desc: "Твои навыки в играх безупречны. Ты не пропускаешь ни одного крупного игрового события и релиза."
-        },
-        {
-            type: "Звезда Хайлайтов",
-            score: clipCount * 3,
-            desc: "Ты всегда в центре событий, ловишь лучшие моменты и создаешь историю Twitch."
-        },
-        {
-            type: "Посетитель Ивентов",
-            score: eventCount * 4,
-            desc: "Ты настоящий фанат сообщества. Ни одно крупное событие или конвент не проходит без твоего участия."
-        },
-        {
-            type: "Ночной Страж",
-            score: dayNight.night > dayNight.day * 2 ? 15 : 0,
-            desc: "Твоя стихия — свет монитора в тишине ночи. Ты знаешь всех ночных стримеров в лицо."
-        },
-        {
-            type: "Ранняя Пташка",
-            score: dayNight.day > dayNight.night * 2 ? 15 : 0,
-            desc: "Ты начинаешь день с Twitch, ловя первые утренние дропы и приветствуя стримеров с рассветом."
+            score: gameCount * 4,
+            desc: "Киберспорт и игровые релизы — твоя стихия. Ты не пропускаешь ни одного важного ивента и твоя коллекция — настоящий зал славы видеоигр."
         },
         {
             type: "Охотник за Сокровищами",
-            score: rarestBadge && rarestBadge.user_count < 2000 ? 20 : 0,
-            desc: "Твой глаз наметан на редчайшие артефакты. Ты владеешь тем, о чем другие только мечтают."
+            score: rarestBadge && rarestBadge.user_count < 1500 ? 25 : 0,
+            desc: "Ты охотишься за тем, что другие даже не замечают. В твоем арсенале есть значки, обладателями которых являются лишь единицы."
         },
         {
-            type: "Архивариус",
-            score: completionistScore > 50 ? completionistScore / 2 : 0,
-            desc: "Ни один значок не проскочит мимо тебя. Ты собираешь историю платформы по крупицам."
+            type: "Звезда Хайлайтов",
+            score: clipCount * 4,
+            desc: "Ты всегда там, где создается контент. Клипы — твоя страсть, и твоя коллекция отражает самые виральные моменты этого года."
         },
         {
-            type: "Щедрый Спонсор",
-            score: paidCount > 10 ? paidCount * 2 : 0,
-            desc: "Твоя поддержка — топливо для прогресса любимых стримеров. Ты ценишь качественный контент."
+            type: "Ночной Страж",
+            score: dayNight.night > dayNight.day * 1.5 ? 15 : 0,
+            desc: "Твое время — глубокая ночь. Ты — тот самый зритель, который остается до конца стрима и забирает самые редкие ночные дропы."
+        },
+        {
+            type: "Ранняя Пташка",
+            score: dayNight.day > dayNight.night * 1.5 ? 15 : 0,
+            desc: "Ты просыпаешься вместе с платформой. Твои значки получены в лучах утреннего солнца, когда чат еще только начинает просыпаться."
+        },
+        {
+            type: "Абсолютный Фанат",
+            score: completionistScore > 60 ? (completionistScore / 2) : 0,
+            desc: "Твоя преданность поражает. Ты собрал больше половины всех значков года, став живой энциклопедий событий Twitch 2025."
+        },
+        {
+            type: "Дроп-Хантер",
+            score: freeCount / (paidCount + 1) > 5 ? 20 : 0,
+            desc: "Ты — мастер бесплатного фарма. Твоя коллекция огромна, и ты не потратил на неё ни копейки, используя лишь свою выдержку."
+        },
+        {
+            type: "Коллекционный Шейх",
+            score: paidCount > 20 ? 30 : 0,
+            desc: "Ты ценишь эксклюзивнось. Твоя коллекция наполнена платными значками и сабками, что делает тебя одним из самых влиятельных зрителей."
         },
         {
             type: "Марафонец",
-            score: maxStreak * 2,
-            desc: "Твоя настойчивость поражает. Недели активности без перерывов сделали тебя легендой."
+            score: maxStreak * 3,
+            desc: "Твое постоянство — твоя суперсила. Ты неделя за неделей забирал дропы без пропусков, показав невероятную дисциплину."
         }
     ];
 
@@ -387,8 +393,9 @@ router.get('/2025', (req, res) => {
     // Badge Mosaic (All 2025 icons)
     const mosaic = badges2025.map(b => ({
         id: b.badge || b.base_id,
-        url: b.url,
-        name: b.name
+        url: b.url.slice(0, -1) + '3',
+        name: b.name,
+        user_count: b.user_count || 0
     }));
 
     // Color Palette (Dominant colors from types)
@@ -451,10 +458,13 @@ router.get('/2025', (req, res) => {
             speedsterCount,
             legendaryMonth,
             totalCharityHeroes,
-            luckyHour: luckyHourText,
             diversityScore,
             favoriteType,
-            colors: Array.from(colors).slice(0, 5)
+            colors: Array.from(colors).slice(0, 5),
+            user: {
+                displayName: req.session.user.display_name || req.session.user.login,
+                color: req.session.user.color || '#9147ff'
+            }
         }
     });
 });

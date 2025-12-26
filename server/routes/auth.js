@@ -60,7 +60,7 @@ router.get('/callback', async (req, res) => {
             roles: roles
         };
 
-        res.redirect('https://badges.news/'); // Redirect back to frontend
+        res.redirect('/'); // Redirect back to frontend
     } catch (error) {
         console.error('Auth Error:', error.response?.data || error.message);
         res.status(500).send('Authentication Failed');
@@ -77,7 +77,7 @@ router.get('/mock', (req, res) => {
         roles: ['creator', 'admin']
     };
     console.log("Session set for rom0zzz");
-    res.redirect('https://badges.news/');
+    res.redirect('/');
 });
 
 router.get('/me', (req, res) => {

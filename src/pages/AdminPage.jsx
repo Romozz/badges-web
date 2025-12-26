@@ -138,6 +138,19 @@ const AdminPage = () => {
             </div>
 
             <div className="admin-section" style={{ marginTop: '3rem' }}>
+                <h2>Имперсонация (Вход под другим пользователем)</h2>
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                    <p style={{ marginBottom: '1.5rem', color: '#aaa', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                        Введите никнейм пользователя, чтобы временно войти в систему от его лица.
+                        Это позволит вам увидеть его итоги года и статистику так, как их видит он.
+                        <br />
+                        <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>⚠️ Внимание:</span> Ваш текущий сеанс администратора будет завершен. Чтобы вернуться, вам нужно будет войти заново через Twitch.
+                    </p>
+                    <ImpersonateForm />
+                </div>
+            </div>
+
+            <div className="admin-section" style={{ marginTop: '3rem' }}>
                 <h2>Управление Администраторами</h2>
                 <p style={{ color: '#aaa', marginBottom: '1rem' }}>
                     {isCreator
@@ -509,6 +522,77 @@ const RecentUsersList = () => {
                 </tbody>
             </table>
         </div>
+    );
+};
+
+const ImpersonateForm = () => {
+    const [username, setUsername] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const handleImpersonate = async (e) => {
+        e.preventDefault();
+        if (!username.trim()) return;
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/impersonate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username.trim() })
+            });
+
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            // Success - reload page to apply new session
+            window.location.href = '/recap';
+        } catch (err) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleImpersonate}>
+            <div style={{ display: 'flex', gap: '12px' }}>
+                <input
+                    type="text"
+                    placeholder="Никнейм Twitch (например, rom0zzz)"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    disabled={loading}
+                    style={{
+                        flex: 1,
+                        padding: '12px 16px',
+                        background: '#1a1a1e',
+                        border: '1px solid #333',
+                        borderRadius: '8px',
+                        color: 'white',
+                        fontSize: '1rem'
+                    }}
+                />
+                <button
+                    type="submit"
+                    disabled={loading || !username.trim()}
+                    style={{
+                        background: loading ? '#444' : '#9147ff',
+                        color: 'white',
+                        border: 'none',
+                        padding: '0 24px',
+                        borderRadius: '8px',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    {loading ? 'Вход...' : 'Войти за пользователя'}
+                </button>
+            </div>
+            {error && <div style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '10px', fontWeight: '500' }}>{error}</div>}
+        </form>
     );
 };
 

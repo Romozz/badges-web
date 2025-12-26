@@ -10,6 +10,7 @@ import StatsPage from './pages/StatsPage';
 import UserProfile from './pages/UserProfile';
 import OverlayPage from './pages/OverlayPage';
 import RecapPage from './pages/RecapPage';
+import RecapModal from './components/RecapModal';
 
 function App() {
     return (
@@ -43,6 +44,7 @@ function App() {
                         <Route path="/:badgeId" element={<BadgeDetailPage />} />
                     </Routes>
                 </Layout>
+                <RecapModal />
             </BrowserRouter>
         </AuthProvider>
     );

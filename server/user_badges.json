@@ -223,8 +223,8 @@
   },
   "248345888": {
     "login": "mejkiz",
+    "display_name": "Mejkiz",
     "badges": [
-      "Broadcaster",
       "Alone",
       "Arc Raiders Launch 2025",
       "Arcane Season 2 Premiere",
@@ -308,14 +308,14 @@
       "ZEVENT 2024",
       "ZEVENT25"
     ],
-    "lastUpdated": "2025-12-19T16:51:03.556Z",
+    "lastUpdated": "2025-12-26T15:03:12.633Z",
+    "isRegistered": true,
+    "color": "#660066",
     "stats": {
-      "total": 83,
-      "free": 5,
+      "total": 82,
+      "free": 26,
       "paid": 4
-    },
-    "display_name": "Mejkiz",
-    "color": "#660066"
+    }
   },
   "518169065": {
     "login": "marvel",
@@ -442,7 +442,7 @@
       "ZEVENT 2024",
       "ZEVENT25"
     ],
-    "lastUpdated": "2025-12-26T10:57:17.716Z",
+    "lastUpdated": "2025-12-26T15:07:44.385Z",
     "isRegistered": true,
     "color": null,
     "stats": {
